@@ -3,10 +3,23 @@ import { VRButton } from 'three/addons/webxr/VRButton.js';
 
 let camera, scene, renderer;
 
+// Chrome exposes XRWebGLBinding.createProjectionLayer even when the session isn't granted
+// the 'layers' feature. three.js only checks that the method exists, sets up a projection
+// layer the session can't use, and Chrome then never delivers an XR frame (SteamVR shows
+// "not responding"). Hide it so three.js falls back to XRWebGLLayer. This only affects the
+// extension's isolated world, not YouTube's own scripts.
+if (typeof XRWebGLBinding !== 'undefined') {
+    delete XRWebGLBinding.prototype.createProjectionLayer;
+}
+
 // Function to be executed when the cardboard icon is clicked
 function handleCardboardIconClick() {
     const videoElement = document.querySelectorAll('video')[0]
     console.log("clicked cardboard button");
+    if (renderer) {
+        console.log("VR already enabled, ignoring click");
+        return;
+    }
     EnableVRVideo(videoElement)
     animate();
 }
@@ -63,7 +76,7 @@ function EnableVRVideo(videoElement) {
     const webgl = document.querySelector('.webgl')
     if (webgl) { webgl.remove(); }
     const spherecontrol = document.querySelector('.ytp-webgl-spherical-control');
-    if (spherecontrol) { webgl.remove(); }
+    if (spherecontrol) { spherecontrol.remove(); }
 
     camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 2000 );
     camera.layers.enable( 1 ); // render left view when no stereo available
@@ -111,6 +124,7 @@ function EnableVRVideo(videoElement) {
 }
 
 function onWindowResize() {
+    if (renderer.xr.isPresenting) return;
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 
