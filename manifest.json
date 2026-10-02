@@ -1,33 +1,17 @@
 {
     "name": "Enable Youtube PC VR in Chromium browsers",
     "version": "1.0.2",
-    "description": "Enables PC-VR for non-3D spherical youtube videos - Tested on HTC Vive Cosmos",
+    "description": "Enables PC-VR for YouTube 360°, VR180 and 3D videos - Tested on HTC Vive Cosmos",
     "manifest_version": 3,
     "author": "feedthedogs",
     "content_scripts": [
         {
           "matches": [  "*://*.youtube.com/*",
                         "*://*.googlevideo.com/*"],
-          "js": ["script.js"]          
+          "js": ["script.js"]
         }
     ],
-    "permissions": [
-        "declarativeNetRequest"
-    ],    
-    "declarative_net_request": {
-        "rule_resources": [
-          {
-            "id": "useagent",
-            "enabled": true,
-            "path": "rules.json"
-          }
-        ]
-    },
     "icons": {
       "128": "icon.png"
-    },
-    "host_permissions": [
-        "*://*.youtube.com/*",
-        "*://*.googlevideo.com/*"
-      ]
+    }
 }
