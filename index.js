@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
 
 let camera, scene, renderer, videoMaterial;
+let vrVideo, onVideoResize, buttonRow;
 let videoMeshes = [];
 let projection = 'EAC'; // what YouTube serves 360° videos as on desktop
 
@@ -95,7 +96,9 @@ function EnableVRVideo(videoElement) {
     videoMaterial = new THREE.MeshBasicMaterial({ map: texture });
     setProjection(projection);
     // the geometry depends on the video's aspect ratio, which can change with quality switches
-    videoElement.addEventListener('resize', () => setProjection(projection));
+    vrVideo = videoElement;
+    onVideoResize = () => setProjection(projection);
+    videoElement.addEventListener('resize', onVideoResize);
 
     renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio( window.devicePixelRatio );
@@ -113,7 +116,7 @@ function EnableVRVideo(videoElement) {
             alertsbox.removeChild(alertsbox.firstChild);
         }
         // lay the VR button and the projection dropdown out side by side
-        const buttonRow = document.createElement('div');
+        buttonRow = document.createElement('div');
         buttonRow.style.display = 'flex';
         buttonRow.style.justifyContent = 'center';
         buttonRow.style.gap = '8px';
@@ -329,6 +332,31 @@ function onWindowResize() {
 
     renderer.setSize( window.innerWidth, window.innerHeight );
 }
+
+// YouTube switches videos without a page load, so tear everything down when it navigates;
+// the cardboard icon can then enable VR again on the next video
+async function DisableVRVideo() {
+    if (!renderer) return;
+    console.log("disabling VR");
+    const session = renderer.xr.getSession();
+    if (session) await session.end().catch(() => {});
+    renderer.setAnimationLoop( null );
+    vrVideo.removeEventListener('resize', onVideoResize);
+    window.removeEventListener( 'resize', onWindowResize );
+    for (const mesh of videoMeshes) {
+        mesh.geometry.dispose();
+        if (mesh.material !== videoMaterial) mesh.material.dispose();
+    }
+    videoMeshes = [];
+    videoMaterial.map.dispose();
+    videoMaterial.dispose();
+    renderer.domElement.remove();
+    if (buttonRow) buttonRow.remove();
+    renderer.dispose();
+    renderer = null;
+}
+
+document.addEventListener('yt-navigate-start', DisableVRVideo);
 
 function animate() {
     renderer.setAnimationLoop( render );
