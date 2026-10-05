@@ -191,7 +191,12 @@ function createController() {
             .catch((e) => {
                 console.warn('video2webxr: entering VR failed:', e);
                 stop();
-                lastError = `Entering VR failed: ${e.message}`;
+                // what Chrome reports when SteamVR refuses the session, usually because another
+                // browser already holds the headset
+                lastError =
+                    e.name === 'NotSupportedError'
+                        ? "The VR runtime couldn't start a session. Another browser or app may be using the headset: close it, or restart SteamVR, and try again."
+                        : `Entering VR failed: ${e.message}`;
             });
     }
 
