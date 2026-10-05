@@ -1,0 +1,42 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create releases for tags
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      # unzips to a folder that can be loaded unpacked
+      - uses: actions/upload-artifact@v7
+        with:
+          name: video2webxr
+          path: dist/
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('./dist/manifest.json').version")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME doesn't match manifest version $version"
+            exit 1
+          fi
+          (cd dist && zip -r "../video2webxr-$version.zip" .)
+          gh release create "$GITHUB_REF_NAME" "video2webxr-$version.zip" --title "video2webxr $version" --generate-notes

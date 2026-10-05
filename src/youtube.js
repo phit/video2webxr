@@ -1,4 +1,5 @@
 import { VRPlayer } from './vr-player.js';
+import cardboardSvg from '../icons/cardboard.svg';
 
 let player = null;
 
@@ -22,8 +23,9 @@ function addCardboardIconToVideo() {
     }
     // Create a new <img> element for the cardboard icon
     const iconImg = document.createElement('img');
-    const cardboardimg = 'data:application/octet-stream;base64,iVBORw0KGgoAAAANSUhEUgAAADQAAAA0CAYAAADFeBvrAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsIAAA7CARUoSoAAAANnSURBVGhD7ZhNaxNBGMezMdsEigRa8IUeBMGUCj1JUehFQSwe6hfwoDf9BB700Lsfwp7Egy+oVQqiR6keJAejhEgC6UmkREjMa5vE/9P8DaYzm9lNUkjo/GDYeWb+88zz7OzMbhKyWCwWi8VisUwsDq8KjUZj1nXdGKrtTsvY4CC2SjQa/U27ByWhVCoVXlhYeOg4zi0UF01jl1C73a6jrGez2fuJRKLFdj17e3t3IZ4IEOsdht0lzOv/XON1EljhtYuSEBKXx2wi0MWqW6Fx2zP9UGLVJTTR2ITGnYETwoZM4dh822q1tlCvsnlg4KMmvsSn+Gbz8Ozu7r6GQ08w6Xdorubz+WMcEqrX6/Nof0lJYJrN5gbe/ufpLpTL5SKYYwU+M5RokVg5xJt+CWGCHIKfo1QB/S8o9Q2SeYWh2k8wJHkGPvOUKgydEPpuUqYFyZ5FAEXKjUD7B2MSHK4Fj+BtyhV0CfneQxi/gzv2jqYWfDDmoPtE0wi0WxiToakFCcue2qFpxHdC+FAtYPIiTU+g22bVCLR5Vj2Zmpoqytw0jQRZoelarRal6Ql0s6wa8aPFCkVlbppGgqzQHFZoiaaWSqUyA90lmkagvShjaGrBCi3J3DSNBHoPhcPhtWQy2T2uD4KE72HyUzT/IZs/LUXqnaYO0J6WMTQVZC6wRnMw+p1yAo7ZZ9Vq9STl++CdFMFp9ICSLkjiB/xdTqfTESlSlzZ2d5Gx4oPu9pE5ZC5KtOhOOeX8F1EkElmlqQW+fqK8QZG7fgIrdx13e7HT2wF9dQS6jEfmC5v2wUl5Af4/Qt+zH6H/imQ3Uf2FvnmUVZSDq90D/G+4rnuDph7TCvkFd/c5XSpIH2VDoVuhQHsoCJhvnVWFfn3DcigJIeB0uVx+T1NB+kRDc6QcVkKP4/F4jaaC9ImG5kgZeUIItIw98oSmJ6IRLc2RoSSESVgbDIzfxMmWpemJaERLc2QoCeEIHiojHL2PWDUSRKsDx7qvP0k+8xoY3PFvhULhA00josWYYX6dmmMtlUrT8obG3RPkbe+3bONFd4VufIMX7bKMPeDLVFqI8anESjddPP+sx5f1Il5cx1E1PYIOvreaeFQzsVhM+we6Ccw1gwDPIU4/h5QjPynwDTi6/x0sFovFYrEcCUKhvx967WCqRNtOAAAAAElFTkSuQmCC'
-    iconImg.src = cardboardimg
+    iconImg.src = 'data:image/svg+xml,' + encodeURIComponent(cardboardSvg);
+    iconImg.style.padding = '12px';
+    iconImg.style.boxSizing = 'border-box';
     iconImg.id = 'cardboardimg'
     iconImg.className = 'ytp-button';
   

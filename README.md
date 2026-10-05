@@ -5,11 +5,9 @@ A Chromium extension that plays web videos in your PC VR headset through WebXR, 
 - **YouTube:** 360°, VR180 and 3D videos, via a cardboard icon in the player
 - **Other sites:** any non-DRM video, via the extension's toolbar button
 
-Based on [EnableYoutubePCVR](https://github.com/feedthedogs/EnableYoutubePCVR) by feedthedogs.
-
 ### Install
 1. Install a Chromium based browser - Chrome, Edge, Brave etc.
-2. Download the project from GitHub and unzip it to a folder
+2. Download `video2webxr-<version>.zip` from the [latest release](https://github.com/phit/video2webxr/releases/latest) and unzip it to a folder
 3. Open the extensions page in the browser and enable developer mode
 4. Click "Load Unpacked" and choose the folder
 
@@ -63,11 +61,16 @@ If it says "VR NOT SUPPORTED" then the browser hasn't detected your hardware
 If you don't see the white cardboard icon in the bottom right hand corner of a YouTube video then the extension is not installed or disabled
 
 ### Development
-Sources are in `src/`: `youtube.js` (YouTube integration), `generic.js` (toolbar button on other sites) and `vr-player.js` (the shared WebXR player). `background.js` is the extension's service worker and isn't bundled.
+Sources are in `src/`: `youtube.js` (YouTube integration), `generic.js` (toolbar button on other sites), `vr-player.js` (the shared WebXR player) and `background.js` (the service worker).
 
 ```
 npm install
-npm run build   # bundles src/ into script.js and generic.js next to manifest.json
-npm run watch   # unminified build with source maps, rebuilt on change
+npm run build   # builds the extension into dist/
+npm run watch   # unminified with source maps, rebuilt on change
 ```
-The built `script.js` and `generic.js` are committed so the folder can be loaded unpacked straight from a checkout.
+Load `dist/` unpacked in the browser. GitHub Actions builds every push; pushing a `v<version>` tag that matches `manifest.json` publishes a release zip.
+
+### Credits
+- Based on [EnableYoutubePCVR](https://github.com/feedthedogs/EnableYoutubePCVR) by feedthedogs (ISC)
+- Cardboard icon from [Tabler Icons](https://tabler.io/icons) (MIT)
+- Rendering by [three.js](https://threejs.org/) (MIT)
