@@ -1,10 +1,13 @@
-import { styleControl, VRPlayer } from './vr-player.js';
+import { DEFAULT_PROJECTION } from './projections.js';
+import { VRPlayer } from './vr-player.js';
 
-// Injected by background.js into the frame with the largest video when the toolbar button is
-// clicked. Running it again in the same frame turns VR off.
+// Injected by the popup into the frame with the largest video. The popup sends commands; the
+// page itself gets no controls, so sites with lightboxes or focus traps aren't disturbed.
+// Chrome only starts a VR session from a user gesture in the page, so "arm" waits for the next
+// click on the video and enters VR from there.
 
-// Most VR videos on other sites are 180° side by side
-const DEFAULT_PROJECTION = '180_LR';
+const NOT_READABLE_CORS =
+    "This site serves the video from another domain without allowing it to be read (CORS), so it can't be shown in VR.";
 
 function findVideos(root = document) {
     const videos = [...root.querySelectorAll('video')];
@@ -22,87 +25,200 @@ function largestVideo() {
     return findVideos().sort((a, b) => area(b) - area(a))[0];
 }
 
+function waitFor(video, event, timeout) {
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error(`no ${event}`)), timeout);
+        video.addEventListener(
+            event,
+            () => {
+                clearTimeout(timer);
+                resolve();
+            },
+            { once: true },
+        );
+        video.addEventListener('error', () => reject(new Error('video error')), { once: true });
+    });
+}
+
 // WebGL can only use video frames the page is allowed to read
-function whyUnusable(video) {
+function isReadable(video) {
+    try {
+        const context = document.createElement('canvas').getContext('2d');
+        context.drawImage(video, 0, 0, 1, 1);
+        context.getImageData(0, 0, 1, 1);
+        return true;
+    } catch (e) {
+        if (e.name === 'SecurityError') return false;
+        throw e;
+    }
+}
+
+// Reloads the video in CORS mode, keeping its position, for sites whose video server allows
+// cross-origin reads but whose <video> element doesn't ask for them (e.g. Wikimedia Commons)
+async function reloadWithCors(video, crossOrigin) {
+    const time = video.currentTime;
+    const playing = !video.paused;
+    if (crossOrigin) video.crossOrigin = crossOrigin;
+    else video.removeAttribute('crossorigin');
+    video.load();
+    await waitFor(video, 'loadeddata', 10000);
+    video.currentTime = time;
+    if (playing) video.play().catch(() => {});
+}
+
+// Returns why the video can't be used in VR, or null if it can
+async function whyUnusable(video) {
     if (video.mediaKeys) {
         return "This video is DRM-protected, so the browser won't let it be shown in VR.";
     }
-    if (video.readyState >= video.HAVE_CURRENT_DATA) {
-        try {
-            const context = document.createElement('canvas').getContext('2d');
-            context.drawImage(video, 0, 0, 1, 1);
-            context.getImageData(0, 0, 1, 1);
-        } catch (e) {
-            if (e.name === 'SecurityError') {
-                return "This site serves the video from another domain without allowing it to be read (CORS), so it can't be shown in VR.";
-            }
-        }
+    if (video.readyState < video.HAVE_CURRENT_DATA) {
+        await waitFor(video, 'loadeddata', 5000).catch(() => {});
+        if (video.readyState < video.HAVE_CURRENT_DATA) return null; // can't tell yet
     }
-    return null;
+    if (isReadable(video)) return null;
+    if (video.crossOrigin !== null || video.currentSrc.startsWith('blob:')) return NOT_READABLE_CORS;
+    try {
+        await reloadWithCors(video, 'anonymous');
+        if (isReadable(video)) return null;
+    } catch {
+        // the server doesn't allow CORS after all; put the site's video back as it was
+        await reloadWithCors(video, null).catch(() => {});
+    }
+    return NOT_READABLE_CORS;
 }
 
-function start(video) {
-    const player = new VRPlayer(video, DEFAULT_PROJECTION);
+function createController() {
+    let state = 'idle'; // idle | armed | starting | active
+    let lastError = null;
+    let projection = DEFAULT_PROJECTION;
+    let video = null;
+    let player = null;
+    let hint = null;
+    let removedCheck = null;
 
-    const closeButton = document.createElement('button');
-    closeButton.textContent = 'CLOSE';
-    styleControl(closeButton);
+    function showHint(text) {
+        hideHint();
+        const rect = video.getBoundingClientRect();
+        hint = document.createElement('div');
+        hint.textContent = text;
+        Object.assign(hint.style, {
+            position: 'fixed',
+            left: `${rect.left + rect.width / 2}px`,
+            top: `${rect.top + rect.height / 2}px`,
+            transform: 'translate(-50%, -50%)',
+            zIndex: '2147483647',
+            pointerEvents: 'none', // clicks go through to the video
+            padding: '12px 18px',
+            borderRadius: '6px',
+            background: 'rgba(0,0,0,0.75)',
+            color: '#fff',
+            font: 'normal 15px sans-serif',
+        });
+        // next to the video, so it shows inside lightboxes and fullscreen elements too
+        (video.parentElement || document.body).appendChild(hint);
+    }
 
-    const panel = document.createElement('div');
-    Object.assign(panel.style, {
-        position: 'fixed',
-        top: '16px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: '2147483647',
-        padding: '8px',
-        borderRadius: '6px',
-        background: 'rgba(0,0,0,0.7)',
-    });
-    panel.appendChild(player.createControls(closeButton));
-    (document.fullscreenElement || document.body).appendChild(panel);
+    function hideHint() {
+        hint?.remove();
+        hint = null;
+    }
 
-    const close = () => {
-        console.log('disabling VR');
+    function isOnVideo(event) {
+        const rect = video.getBoundingClientRect();
+        return (
+            event.clientX >= rect.left &&
+            event.clientX <= rect.right &&
+            event.clientY >= rect.top &&
+            event.clientY <= rect.bottom
+        );
+    }
+
+    // capture phase, so the site doesn't also see the click (and e.g. pause the video)
+    function onClick(event) {
+        if (!isOnVideo(event)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        window.removeEventListener('click', onClick, true);
+        hideHint();
+        // the site doesn't see this click, so start playback ourselves
+        if (video.paused) video.play().catch(() => {});
+        player = new VRPlayer(video, projection);
+        state = 'starting';
+        console.log('video2webxr: entering VR');
+        player
+            .enterVR()
+            .then((session) => {
+                console.log('video2webxr: in VR');
+                state = 'active';
+                session.addEventListener('end', stop);
+            })
+            .catch((e) => {
+                console.warn('video2webxr: entering VR failed:', e);
+                stop();
+                lastError = `Entering VR failed: ${e.message}`;
+            });
+    }
+
+    function stop() {
+        window.removeEventListener('click', onClick, true);
+        hideHint();
         clearInterval(removedCheck);
-        video.removeEventListener('emptied', close);
-        player.dispose();
-        panel.remove();
-        delete window.__pcvrGeneric;
+        video?.removeEventListener('emptied', stop);
+        player?.dispose();
+        player = null;
+        state = 'idle';
+    }
+
+    async function arm(newProjection) {
+        projection = newProjection;
+        lastError = null;
+        if (state === 'active') {
+            player.setProjection(projection);
+            return { state };
+        }
+        stop();
+        video = largestVideo();
+        if (!video) return { error: 'No video found on this page.' };
+        const problem = await whyUnusable(video);
+        if (problem) return { error: problem };
+        // stop when the site swaps or removes the video
+        video.addEventListener('emptied', stop);
+        removedCheck = setInterval(() => {
+            if (!video.isConnected) stop();
+        }, 1000);
+        window.addEventListener('click', onClick, true);
+        showHint('Click the video to enter VR');
+        state = 'armed';
+        return { state };
+    }
+
+    return {
+        get state() {
+            return state;
+        },
+        async handle(message) {
+            switch (message.type) {
+                case 'state':
+                    return { state, projection, error: lastError };
+                case 'arm':
+                    return arm(message.projection);
+                case 'setProjection':
+                    projection = message.projection;
+                    player?.setProjection(projection);
+                    return { state };
+                case 'stop':
+                    stop();
+                    return { state };
+            }
+        },
     };
-    closeButton.onclick = close;
-    // stop when the site swaps or removes the video
-    video.addEventListener('emptied', close);
-    const removedCheck = setInterval(() => {
-        if (!video.isConnected) close();
-    }, 1000);
-
-    window.__pcvrGeneric = { close };
 }
 
-function main() {
-    if (window.__pcvrGeneric) {
-        window.__pcvrGeneric.close();
-        return;
-    }
-    // YouTube has its own integration behind the cardboard icon
-    const cardboard = document.querySelector('#cardboardimg');
-    if (cardboard) {
-        cardboard.click();
-        return;
-    }
-    const video = largestVideo();
-    if (!video) {
-        alert('No video found on this page.');
-        return;
-    }
-    const problem = whyUnusable(video);
-    if (problem) {
-        alert(problem);
-        return;
-    }
-    console.log(`enabling VR on ${video.currentSrc}`);
-    start(video);
+// the popup may inject this script more than once
+if (!window.__video2webxr) {
+    window.__video2webxr = createController();
+    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+        window.__video2webxr.handle(message).then(sendResponse, (e) => sendResponse({ error: e.message }));
+        return true; // responds asynchronously
+    });
 }
-
-main();

@@ -26,10 +26,11 @@ A Chromium extension that plays web videos in your PC VR headset through WebXR, 
 **On other sites**
 1. Start playing the video
 2. Click the video2webxr button in the browser toolbar (pin it from the extensions menu)
-3. A panel with "Enter VR", the projection dropdown and "Close" appears at the top of the page; it defaults to 180° 3D side by side
+3. Pick the projection in the popup (defaults to 180° 3D side by side; your choice is remembered) and click "Enter VR"
+4. Click the video in the page to enter VR. Browsers only start VR from a click in the page itself, so this step can't be skipped
+5. Open the popup again to change the projection while in VR, or click "Stop"
 
-   ![The panel with Enter VR, the projection dropdown and Close](videomenu.png)
-4. Click "Enter VR"; click the toolbar button again or "Close" to stop
+The page itself gets no extra controls, so video lightboxes and overlays keep working.
 
 ### Projections
 
@@ -48,7 +49,7 @@ You can switch the projection while in VR. If the image looks jumbled into squar
 
 ### Limitations
 - DRM-protected videos (Netflix, Prime Video, Disney+ etc.) can't be shown: the browser won't hand protected frames to WebGL
-- Videos served from another domain without CORS headers can't be read by WebGL either; the extension tells you when that's the case
+- Videos served from another domain without CORS headers can't be read by WebGL either; the extension retries with CORS turned on and tells you if that doesn't work
 - On other sites the toolbar button can only reach videos in the page itself and in same-site frames
 - The Steam Frame's built-in browser doesn't work with it yet; see [saphid/chromium-webxr-steam-frame](https://github.com/saphid/chromium-webxr-steam-frame) for a community workaround
 
@@ -56,6 +57,8 @@ You can switch the projection while in VR. If the image looks jumbled into squar
 If "Enter VR" says "VR NOT SUPPORTED", the browser hasn't found your headset:
 - Make sure SteamVR is running and the headset is connected
 - Set "WebXR runtime" to OpenXR at `chrome://flags/#webxr-runtime` and restart the browser
+
+If clicking the video doesn't enter VR, close other browser windows that use the headset; only one browser can be in VR at a time. The popup shows why the last attempt failed.
 
 If you don't see the white cardboard icon in the bottom right hand corner of a YouTube video then the extension is not installed or disabled
 

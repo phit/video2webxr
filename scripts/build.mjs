@@ -12,7 +12,8 @@ const outdir = 'dist';
 const STATIC_FILES = [
     'manifest.json',
     'LICENSE',
-    'src/background.js',
+    'src/popup.html',
+    'src/popup.css',
     'icons/icon16.png',
     'icons/icon32.png',
     'icons/icon48.png',
@@ -28,7 +29,7 @@ for (const file of STATIC_FILES) {
 }
 
 const context = await esbuild.context({
-    entryPoints: { script: 'src/youtube.js', generic: 'src/generic.js' },
+    entryPoints: { script: 'src/youtube.js', generic: 'src/generic.js', popup: 'src/popup.js' },
     outdir,
     bundle: true,
     format: 'iife',

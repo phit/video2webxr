@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
+import { PROJECTION_LABELS } from './projections.js';
 
 // Chrome exposes XRWebGLBinding.createProjectionLayer even when the session isn't granted
 // the 'layers' feature. three.js only checks that the method exists, sets up a projection
@@ -20,24 +21,21 @@ const TOP_HALF = [0, 0.5, 1, 0.5],
 // Each projection builds its meshes. Stereo projections put one mesh on layer 1 (left eye)
 // and one on layer 2 (right eye); three.js renders those layers to the matching eye in VR.
 export const PROJECTIONS = {
-    EAC: { label: '360° EAC (YouTube default)', build: (m) => [eacMesh(m)] },
-    EAC_LR: { label: '360° EAC 3D', build: (m) => eacStereoMeshes(m) },
-    CUBE: { label: '360° cubemap', build: (m) => [boxMesh(backSide(m), CUBE_FACES)] },
-    360: { label: '360° equirectangular', build: (m) => [sphereMesh(m, false, FULL_FRAME)] },
+    EAC: { build: (m) => [eacMesh(m)] },
+    EAC_LR: { build: (m) => eacStereoMeshes(m) },
+    CUBE: { build: (m) => [boxMesh(backSide(m), CUBE_FACES)] },
+    360: { build: (m) => [sphereMesh(m, false, FULL_FRAME)] },
     '360_TB': {
-        label: '360° 3D top/bottom',
         build: (m) => [sphereMesh(m, false, TOP_HALF, 1), sphereMesh(m, false, BOTTOM_HALF, 2)],
     },
     '360_LR': {
-        label: '360° 3D side by side',
         build: (m) => [sphereMesh(m, false, LEFT_HALF, 1), sphereMesh(m, false, RIGHT_HALF, 2)],
     },
-    180: { label: '180°', build: (m) => [sphereMesh(m, true, FULL_FRAME)] },
+    180: { build: (m) => [sphereMesh(m, true, FULL_FRAME)] },
     '180_LR': {
-        label: '180° 3D side by side',
         build: (m) => [sphereMesh(m, true, LEFT_HALF, 1), sphereMesh(m, true, RIGHT_HALF, 2)],
     },
-    FLAT: { label: 'Flat screen', build: (m) => [flatScreenMesh(m)] },
+    FLAT: { build: (m) => [flatScreenMesh(m)] },
 };
 
 // Equirectangular sphere (or front hemisphere for 180°), centred on -Z where the viewer faces.
@@ -230,6 +228,16 @@ export class VRPlayer {
         window.addEventListener('resize', this.onWindowResize);
     }
 
+    // Starts an immersive session. Chrome only allows this from a user gesture in the page,
+    // so call it synchronously from a click handler.
+    async enterVR() {
+        const session = await navigator.xr.requestSession('immersive-vr', {
+            optionalFeatures: ['local-floor', 'bounded-floor'],
+        });
+        await this.renderer.xr.setSession(session);
+        return session;
+    }
+
     get canvas() {
         return this.renderer.domElement;
     }
@@ -255,7 +263,7 @@ export class VRPlayer {
         const select = document.createElement('select');
         select.id = 'VRProjectionSelect';
         select.title = 'Video projection';
-        for (const [value, { label }] of Object.entries(PROJECTIONS)) {
+        for (const [value, label] of PROJECTION_LABELS) {
             const option = document.createElement('option');
             option.value = value;
             option.textContent = label;

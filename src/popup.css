@@ -1,0 +1,60 @@
+body {
+    width: 280px;
+    margin: 0;
+    padding: 14px 16px 16px;
+    background: #202124;
+    color: #e8eaed;
+    font:
+        13px system-ui,
+        sans-serif;
+}
+h1 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+    font-size: 15px;
+}
+h1 img {
+    width: 20px;
+    height: 20px;
+}
+#status {
+    margin: 0 0 12px;
+    line-height: 1.4;
+}
+#status.error {
+    color: #f28b82;
+}
+label {
+    display: block;
+    margin-bottom: 4px;
+    color: #9aa0a6;
+}
+select,
+button {
+    width: 100%;
+    padding: 7px 8px;
+    border: 1px solid #5f6368;
+    border-radius: 4px;
+    background: #303134;
+    color: inherit;
+    font: inherit;
+}
+.buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+button {
+    cursor: pointer;
+}
+button:disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+#enter:not(:disabled) {
+    border-color: #1a73e8;
+    background: #1a73e8;
+    color: #fff;
+}
