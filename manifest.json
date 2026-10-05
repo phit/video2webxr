@@ -3,10 +3,9 @@
     "version": "2.0.0",
     "description": "Watch YouTube 360°/VR180 videos and videos on other sites in your PC VR headset via WebXR",
     "manifest_version": 3,
-    "author": "phit, based on EnableYoutubePCVR by feedthedogs",
     "content_scripts": [
         {
-            "matches": ["*://*.youtube.com/*", "*://*.googlevideo.com/*"],
+            "matches": ["*://*.youtube.com/*"],
             "js": ["script.js"]
         }
     ],
