@@ -1,8 +1,9 @@
 // Builds the extension into dist/, ready to load unpacked or zip for release.
 //   node scripts/build.mjs          production build (minified)
 //   node scripts/build.mjs --watch  unminified with inline source maps, rebuilt on change
-import * as esbuild from 'esbuild';
+
 import fs from 'node:fs';
+import * as esbuild from 'esbuild';
 
 const watch = process.argv.includes('--watch');
 const outdir = 'dist';

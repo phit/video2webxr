@@ -1,4 +1,4 @@
-import { VRPlayer, styleControl } from './vr-player.js';
+import { styleControl, VRPlayer } from './vr-player.js';
 
 // Injected by background.js into the frame with the largest video when the toolbar button is
 // clicked. Running it again in the same frame turns VR off.
@@ -15,7 +15,10 @@ function findVideos(root = document) {
 }
 
 function largestVideo() {
-    const area = (video) => { const r = video.getBoundingClientRect(); return r.width * r.height; };
+    const area = (video) => {
+        const r = video.getBoundingClientRect();
+        return r.width * r.height;
+    };
     return findVideos().sort((a, b) => area(b) - area(a))[0];
 }
 
@@ -47,14 +50,20 @@ function start(video) {
 
     const panel = document.createElement('div');
     Object.assign(panel.style, {
-        position: 'fixed', top: '16px', left: '50%', transform: 'translateX(-50%)', zIndex: '2147483647',
-        padding: '8px', borderRadius: '6px', background: 'rgba(0,0,0,0.7)'
+        position: 'fixed',
+        top: '16px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: '2147483647',
+        padding: '8px',
+        borderRadius: '6px',
+        background: 'rgba(0,0,0,0.7)',
     });
     panel.appendChild(player.createControls(closeButton));
     (document.fullscreenElement || document.body).appendChild(panel);
 
     const close = () => {
-        console.log("disabling VR");
+        console.log('disabling VR');
         clearInterval(removedCheck);
         video.removeEventListener('emptied', close);
         player.dispose();
@@ -64,7 +73,9 @@ function start(video) {
     closeButton.onclick = close;
     // stop when the site swaps or removes the video
     video.addEventListener('emptied', close);
-    const removedCheck = setInterval(() => { if (!video.isConnected) close(); }, 1000);
+    const removedCheck = setInterval(() => {
+        if (!video.isConnected) close();
+    }, 1000);
 
     window.__pcvrGeneric = { close };
 }
@@ -90,7 +101,7 @@ function main() {
         alert(problem);
         return;
     }
-    console.log("enabling VR on " + video.currentSrc);
+    console.log(`enabling VR on ${video.currentSrc}`);
     start(video);
 }
 

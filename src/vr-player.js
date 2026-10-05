@@ -12,21 +12,32 @@ if (typeof XRWebGLBinding !== 'undefined') {
 
 // Texture regions for each eye: [offsetU, offsetV, scaleU, scaleV]
 const FULL_FRAME = [0, 0, 1, 1];
-const LEFT_HALF = [0, 0, 0.5, 1], RIGHT_HALF = [0.5, 0, 0.5, 1];
-const TOP_HALF = [0, 0.5, 1, 0.5], BOTTOM_HALF = [0, 0, 1, 0.5];
+const LEFT_HALF = [0, 0, 0.5, 1],
+    RIGHT_HALF = [0.5, 0, 0.5, 1];
+const TOP_HALF = [0, 0.5, 1, 0.5],
+    BOTTOM_HALF = [0, 0, 1, 0.5];
 
 // Each projection builds its meshes. Stereo projections put one mesh on layer 1 (left eye)
 // and one on layer 2 (right eye); three.js renders those layers to the matching eye in VR.
 export const PROJECTIONS = {
-    'EAC':    { label: '360° EAC (YouTube default)', build: (m) => [eacMesh(m)] },
-    'EAC_LR': { label: '360° EAC 3D', build: (m) => eacStereoMeshes(m) },
-    'CUBE':   { label: '360° cubemap', build: (m) => [boxMesh(backSide(m), CUBE_FACES)] },
-    '360':    { label: '360° equirectangular', build: (m) => [sphereMesh(m, false, FULL_FRAME)] },
-    '360_TB': { label: '360° 3D top/bottom', build: (m) => [sphereMesh(m, false, TOP_HALF, 1), sphereMesh(m, false, BOTTOM_HALF, 2)] },
-    '360_LR': { label: '360° 3D side by side', build: (m) => [sphereMesh(m, false, LEFT_HALF, 1), sphereMesh(m, false, RIGHT_HALF, 2)] },
-    '180':    { label: '180°', build: (m) => [sphereMesh(m, true, FULL_FRAME)] },
-    '180_LR': { label: '180° 3D side by side', build: (m) => [sphereMesh(m, true, LEFT_HALF, 1), sphereMesh(m, true, RIGHT_HALF, 2)] },
-    'FLAT':   { label: 'Flat screen', build: (m) => [flatScreenMesh(m)] },
+    EAC: { label: '360° EAC (YouTube default)', build: (m) => [eacMesh(m)] },
+    EAC_LR: { label: '360° EAC 3D', build: (m) => eacStereoMeshes(m) },
+    CUBE: { label: '360° cubemap', build: (m) => [boxMesh(backSide(m), CUBE_FACES)] },
+    360: { label: '360° equirectangular', build: (m) => [sphereMesh(m, false, FULL_FRAME)] },
+    '360_TB': {
+        label: '360° 3D top/bottom',
+        build: (m) => [sphereMesh(m, false, TOP_HALF, 1), sphereMesh(m, false, BOTTOM_HALF, 2)],
+    },
+    '360_LR': {
+        label: '360° 3D side by side',
+        build: (m) => [sphereMesh(m, false, LEFT_HALF, 1), sphereMesh(m, false, RIGHT_HALF, 2)],
+    },
+    180: { label: '180°', build: (m) => [sphereMesh(m, true, FULL_FRAME)] },
+    '180_LR': {
+        label: '180° 3D side by side',
+        build: (m) => [sphereMesh(m, true, LEFT_HALF, 1), sphereMesh(m, true, RIGHT_HALF, 2)],
+    },
+    FLAT: { label: 'Flat screen', build: (m) => [flatScreenMesh(m)] },
 };
 
 // Equirectangular sphere (or front hemisphere for 180°), centred on -Z where the viewer faces.
@@ -35,13 +46,20 @@ export const PROJECTIONS = {
 function sphereMesh(material, halfSphere, [offsetU, offsetV, scaleU, scaleV], layer) {
     const horizontalFov = halfSphere ? Math.PI : Math.PI * 2;
     const video = material.map.image;
-    const eyeAspect = video.videoWidth && video.videoHeight
-        ? (video.videoWidth * scaleU) / (video.videoHeight * scaleV)
-        : horizontalFov / Math.PI;
+    const eyeAspect =
+        video.videoWidth && video.videoHeight
+            ? (video.videoWidth * scaleU) / (video.videoHeight * scaleV)
+            : horizontalFov / Math.PI;
     const verticalFov = Math.min(Math.PI, horizontalFov / eyeAspect);
-    const geometry = new THREE.SphereGeometry(500, 60, 40,
-        halfSphere ? Math.PI : Math.PI / 2, horizontalFov,
-        (Math.PI - verticalFov) / 2, verticalFov);
+    const geometry = new THREE.SphereGeometry(
+        500,
+        60,
+        40,
+        halfSphere ? Math.PI : Math.PI / 2,
+        horizontalFov,
+        (Math.PI - verticalFov) / 2,
+        verticalFov,
+    );
     geometry.scale(-1, 1, 1); // Invert the geometry to match equirectangular projection
     const uv = geometry.attributes.uv;
     for (let i = 0; i < uv.count; i++) {
@@ -56,24 +74,24 @@ function sphereMesh(material, halfSphere, [offsetU, offsetV, scaleU, scaleV], la
 // video frame as [bottom-left, bottom-right, top-right, top-left] (UV space, v pointing up).
 const v2 = (x, y) => new THREE.Vector2(x, y);
 const CUBE_FACES = {
-    left:   [v2(0, .5), v2(1 / 3, .5), v2(1 / 3, 1), v2(0, 1)],
-    right:  [v2(1 / 3, .5), v2(2 / 3, .5), v2(2 / 3, 1), v2(1 / 3, 1)],
-    top:    [v2(2 / 3, .5), v2(1, .5), v2(1, 1), v2(2 / 3, 1)],
-    bottom: [v2(0, 0), v2(1 / 3, 0), v2(1 / 3, .5), v2(0, .5)],
-    front:  [v2(1 / 3, 0), v2(2 / 3, 0), v2(2 / 3, .5), v2(1 / 3, .5)],
-    back:   [v2(2 / 3, 0), v2(1, 0), v2(1, .5), v2(2 / 3, .5)],
+    left: [v2(0, 0.5), v2(1 / 3, 0.5), v2(1 / 3, 1), v2(0, 1)],
+    right: [v2(1 / 3, 0.5), v2(2 / 3, 0.5), v2(2 / 3, 1), v2(1 / 3, 1)],
+    top: [v2(2 / 3, 0.5), v2(1, 0.5), v2(1, 1), v2(2 / 3, 1)],
+    bottom: [v2(0, 0), v2(1 / 3, 0), v2(1 / 3, 0.5), v2(0, 0.5)],
+    front: [v2(1 / 3, 0), v2(2 / 3, 0), v2(2 / 3, 0.5), v2(1 / 3, 0.5)],
+    back: [v2(2 / 3, 0), v2(1, 0), v2(1, 0.5), v2(2 / 3, 0.5)],
 };
 
 // YouTube's equi-angular cubemap: left/front/right on the top row, bottom/back/top on the
 // bottom row rotated by 90°
 function eacFaces() {
     return {
-        right:  [v2(0, .5), v2(1 / 3, .5), v2(1 / 3, 1), v2(0, 1)],
-        front:  [v2(1 / 3, .5), v2(2 / 3, .5), v2(2 / 3, 1), v2(1 / 3, 1)],
-        left:   [v2(2 / 3, .5), v2(1, .5), v2(1, 1), v2(2 / 3, 1)],
-        bottom: [v2(1 / 3, 0), v2(1 / 3, .5), v2(0, .5), v2(0, 0)],
-        back:   [v2(1 / 3, .5), v2(1 / 3, 0), v2(2 / 3, 0), v2(2 / 3, .5)],
-        top:    [v2(1, 0), v2(1, .5), v2(2 / 3, .5), v2(2 / 3, 0)],
+        right: [v2(0, 0.5), v2(1 / 3, 0.5), v2(1 / 3, 1), v2(0, 1)],
+        front: [v2(1 / 3, 0.5), v2(2 / 3, 0.5), v2(2 / 3, 1), v2(1 / 3, 1)],
+        left: [v2(2 / 3, 0.5), v2(1, 0.5), v2(1, 1), v2(2 / 3, 1)],
+        bottom: [v2(1 / 3, 0), v2(1 / 3, 0.5), v2(0, 0.5), v2(0, 0)],
+        back: [v2(1 / 3, 0.5), v2(1 / 3, 0), v2(2 / 3, 0), v2(2 / 3, 0.5)],
+        top: [v2(1, 0), v2(1, 0.5), v2(2 / 3, 0.5), v2(2 / 3, 0)],
     };
 }
 
@@ -86,7 +104,9 @@ function boxMesh(material, faces, layer) {
     ['right', 'left', 'top', 'bottom', 'front', 'back'].forEach((name, face) => {
         const [bottomLeft, bottomRight, topRight, topLeft] = faces[name];
         // mirrored horizontally, because the face is seen from the back
-        [topRight, topLeft, bottomRight, bottomLeft].forEach((corner, i) => uv.setXY(face * 4 + i, corner.x, corner.y));
+        [topRight, topLeft, bottomRight, bottomLeft].forEach((corner, i) => {
+            uv.setXY(face * 4 + i, corner.x, corner.y);
+        });
     });
     const mesh = new THREE.Mesh(geometry, material);
     mesh.rotation.y = -Math.PI;
@@ -109,12 +129,12 @@ function eacMesh(material, mapMatrix = new THREE.Matrix3(), scaleMatrix = new TH
     const height = video.videoHeight || 1080;
     const faces = eacFaces();
     for (const corners of Object.values(faces)) {
-        const lowY = Math.min(...corners.map(c => c.y));
-        const highY = Math.max(...corners.map(c => c.y));
+        const lowY = Math.min(...corners.map((c) => c.y));
+        const highY = Math.max(...corners.map((c) => c.y));
         for (const corner of corners) {
             if (corner.y === lowY) corner.y += EAC_EDGE_PX / height;
             if (corner.y === highY) corner.y -= EAC_EDGE_PX / height;
-            corner.x = corner.x / height * (height - EAC_EDGE_PX * 2) + EAC_EDGE_PX / height;
+            corner.x = (corner.x / height) * (height - EAC_EDGE_PX * 2) + EAC_EDGE_PX / height;
         }
     }
     const shader = new THREE.ShaderMaterial({
@@ -178,8 +198,8 @@ export class VRPlayer {
         this.projection = projection;
         this.meshes = [];
 
-        this.camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 2000 );
-        this.camera.layers.enable( 1 ); // render left view when no stereo available
+        this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 2000);
+        this.camera.layers.enable(1); // render left view when no stereo available
 
         const texture = new THREE.VideoTexture(video);
         texture.colorSpace = THREE.SRGBColorSpace;
@@ -188,26 +208,26 @@ export class VRPlayer {
         this.material = new THREE.MeshBasicMaterial({ map: texture });
 
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color( 0x101010 );
+        this.scene.background = new THREE.Color(0x101010);
         this.setProjection(projection);
         // the geometry depends on the video's aspect ratio, which can change with quality switches
         this.onVideoResize = () => this.setProjection(this.projection);
         video.addEventListener('resize', this.onVideoResize);
 
         this.renderer = new THREE.WebGLRenderer();
-        this.renderer.setPixelRatio( window.devicePixelRatio );
-        this.renderer.setSize( window.innerWidth, window.innerHeight );
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.xr.enabled = true;
-        this.renderer.xr.setReferenceSpaceType( 'local' );
-        this.renderer.setAnimationLoop( () => this.renderer.render( this.scene, this.camera ) );
+        this.renderer.xr.setReferenceSpaceType('local');
+        this.renderer.setAnimationLoop(() => this.renderer.render(this.scene, this.camera));
 
         this.onWindowResize = () => {
             if (this.renderer.xr.isPresenting) return;
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
-            this.renderer.setSize( window.innerWidth, window.innerHeight );
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
         };
-        window.addEventListener( 'resize', this.onWindowResize );
+        window.addEventListener('resize', this.onWindowResize);
     }
 
     get canvas() {
@@ -225,7 +245,7 @@ export class VRPlayer {
     createControls(...extraButtons) {
         this.controls = document.createElement('div');
         Object.assign(this.controls.style, { display: 'flex', justifyContent: 'center', gap: '8px' });
-        const vrButton = VRButton.createButton( this.renderer );
+        const vrButton = VRButton.createButton(this.renderer);
         vrButton.style.position = 'static';
         this.controls.append(vrButton, this.createProjectionSelect(), ...extraButtons);
         return this.controls;
@@ -260,9 +280,9 @@ export class VRPlayer {
     async dispose() {
         const session = this.renderer.xr.getSession();
         if (session) await session.end().catch(() => {});
-        this.renderer.setAnimationLoop( null );
+        this.renderer.setAnimationLoop(null);
         this.video.removeEventListener('resize', this.onVideoResize);
-        window.removeEventListener( 'resize', this.onWindowResize );
+        window.removeEventListener('resize', this.onWindowResize);
         this.disposeMeshes();
         this.material.map.dispose();
         this.material.dispose();
@@ -275,10 +295,20 @@ export class VRPlayer {
 // Same look as three.js' VR button
 export function styleControl(element) {
     Object.assign(element.style, {
-        padding: '12px 6px', border: '1px solid #fff', borderRadius: '4px',
-        background: 'rgba(0,0,0,0.1)', color: '#fff', font: 'normal 13px sans-serif',
-        opacity: '0.5', outline: 'none', cursor: 'pointer'
+        padding: '12px 6px',
+        border: '1px solid #fff',
+        borderRadius: '4px',
+        background: 'rgba(0,0,0,0.1)',
+        color: '#fff',
+        font: 'normal 13px sans-serif',
+        opacity: '0.5',
+        outline: 'none',
+        cursor: 'pointer',
     });
-    element.onmouseenter = () => { element.style.opacity = '1.0'; };
-    element.onmouseleave = () => { element.style.opacity = '0.5'; };
+    element.onmouseenter = () => {
+        element.style.opacity = '1.0';
+    };
+    element.onmouseleave = () => {
+        element.style.opacity = '0.5';
+    };
 }

@@ -3,16 +3,23 @@
 chrome.action.onClicked.addListener(async (tab) => {
     let frames;
     try {
-        frames = await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, func: measureVideos });
-    } catch (e) {
+        frames = await chrome.scripting.executeScript({
+            target: { tabId: tab.id, allFrames: true },
+            func: measureVideos,
+        });
+    } catch {
         // some frames are off limits; fall back to the top frame
-        frames = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: measureVideos }).catch(() => []);
+        frames = await chrome.scripting
+            .executeScript({ target: { tabId: tab.id }, func: measureVideos })
+            .catch(() => []);
     }
-    const best = frames.filter(frame => frame.result).sort((a, b) => b.result - a.result)[0];
-    await chrome.scripting.executeScript({
-        target: { tabId: tab.id, frameIds: [best ? best.frameId : 0] },
-        files: ['generic.js']
-    }).catch(e => console.warn("can't start VR in this tab:", e.message));
+    const best = frames.filter((frame) => frame.result).sort((a, b) => b.result - a.result)[0];
+    await chrome.scripting
+        .executeScript({
+            target: { tabId: tab.id, frameIds: [best ? best.frameId : 0] },
+            files: ['generic.js'],
+        })
+        .catch((e) => console.warn("can't start VR in this tab:", e.message));
 });
 
 // Runs in each frame: the area of its largest video, or a huge number if VR is already
@@ -27,8 +34,11 @@ function measureVideos() {
         }
     };
     walk(document);
-    return Math.max(0, ...videos.map(video => {
-        const rect = video.getBoundingClientRect();
-        return rect.width * rect.height;
-    }));
+    return Math.max(
+        0,
+        ...videos.map((video) => {
+            const rect = video.getBoundingClientRect();
+            return rect.width * rect.height;
+        }),
+    );
 }
