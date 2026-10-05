@@ -1,54 +1,73 @@
-# Enable Youtube PC VR in Chromium
+# video2webxr
 
-I couldn't find a way to watch Youtube VR videos on the PC without paying?
+A Chromium extension that plays web videos in your PC VR headset through WebXR, using https://threejs.org/
 
-This is a Chromium extension to enable WebXR on Youtube 360°, VR180 and 3D videos thanks to https://threejs.org/
+- **YouTube:** 360°, VR180 and 3D videos, via a cardboard icon in the player
+- **Other sites:** any non-DRM video, via the extension's toolbar button
 
-### Install Instructions - Easy way
-1. Using Microsoft Edge, open the extension page at: https://microsoftedge.microsoft.com/addons/detail/enable-youtube-pc-vr-in-e/bcadncfmfmigccocnahamkkpbfopjffp
-2. Click "Get" on the right hand side
+Based on [EnableYoutubePCVR](https://github.com/feedthedogs/EnableYoutubePCVR) by feedthedogs.
 
-### Install Instructions - Manual way
+### Install
 1. Install a Chromium based browser - Chrome, Edge, Brave etc.
-2. Download the project from github and unzip it to a folder
-3. Open the extensions in the browser and enable developer mode
+2. Download the project from GitHub and unzip it to a folder
+3. Open the extensions page in the browser and enable developer mode
 4. Click "Load Unpacked" and choose the folder
 
-### Usage Instructions
-1. Turn VR on first
+### Usage
+1. Turn VR on first (e.g. start SteamVR)
 2. Start a new browser so that it detects the hardware
-3. Open a 360° or VR180 video on https://www.youtube.com/vr/
-4. Click on the white cardboard icon in the bottom right hand corner of the video
-5. Pick the video's projection in the dropdown next to the "Enter VR" button (see below)
-6. Click on the "Enter VR" button in the middle bottom of the video
-7. Enjoy
 
-| Projection | Use it for |
-|---|---|
-| 360° EAC (YouTube default) | 360° videos - this is how YouTube serves them on desktop |
-| 360° EAC 3D | 3D 360° videos served as stereo EAC |
-| 360° cubemap | videos in a plain 3x2 cubemap layout |
-| 360° equirectangular | 360° videos served as a single equirectangular image |
-| 360° 3D top/bottom, side by side | 3D equirectangular 360° videos |
-| 180° | VR180 videos |
-| 180° 3D side by side | 3D 180° videos with both eyes side by side |
-| Flat screen | videos YouTube only serves as a normal 16:9 picture |
-
-You can switch the projection while in VR. If the image looks jumbled into squares, try a 360° EAC option; if it looks stretched or doubled, try the others.
+**On YouTube**
+1. Open a 360° or VR180 video, e.g. on https://www.youtube.com/vr/
+2. Click on the white cardboard icon in the bottom right hand corner of the video
+3. Pick the video's projection in the dropdown next to the "Enter VR" button
+4. Click on the "Enter VR" button below the video
 
 ![Click the Cardboard Icon](pcytvr1.png)
 ![Click the Enter VR Button](pcytvr2.png)
 
-### Troubleshooting
-If it stops working after switching videos try refreshing the browser and it should be able to be enabled again
+**On other sites**
+1. Start playing the video
+2. Click the video2webxr button in the browser toolbar (pin it from the extensions menu)
+3. A panel with "Enter VR", the projection dropdown and "Close" appears at the top of the page; it defaults to 180° 3D side by side
+4. Click "Enter VR"; click the toolbar button again or "Close" to stop
 
-If it says "VR NOT SUPPPORTED" then the browser hasn't detected your hardware
+### Projections
+
+| Projection | Use it for |
+|---|---|
+| 360° EAC (YouTube default) | 360° videos on YouTube - this is how YouTube serves them on desktop |
+| 360° EAC 3D | 3D 360° videos served as stereo EAC |
+| 360° cubemap | videos in a plain 3x2 cubemap layout |
+| 360° equirectangular | 360° videos served as a single equirectangular image (2:1) |
+| 360° 3D top/bottom, side by side | 3D equirectangular 360° videos |
+| 180° | VR180 videos on YouTube, and other mono 180° videos |
+| 180° 3D side by side (other sites' default) | 3D 180° videos with both eyes side by side, the most common VR video format |
+| Flat screen | normal videos, shown on a virtual screen in front of you |
+
+You can switch the projection while in VR. If the image looks jumbled into squares, try a 360° EAC option; if it looks stretched or doubled, try the others.
+
+### Limitations
+- DRM-protected videos (Netflix, Prime Video, Disney+ etc.) can't be shown: the browser won't hand protected frames to WebGL
+- Videos served from another domain without CORS headers can't be read by WebGL either; the extension tells you when that's the case
+- On other sites the toolbar button can only reach videos in the page itself and in same-site frames
+
+### Troubleshooting
+If it says "VR NOT SUPPORTED" then the browser hasn't detected your hardware
 - Make sure your VR is turned on and calibrated to your room
-- Make sure you have given Youtube.com permission to access "Virtual reality" in the "site permissions"
+- Make sure you have given the site permission to access "Virtual reality" in the "site permissions"
 - Microsoft Edge may not detect SteamVR by default; start it with `--enable-features=WebXR,OpenXR --force-webxr-runtime=openxr`
 - Only one browser can use the headset at a time; close other browser windows that have entered VR
-- I have tested this on a HTC Vive Cosmos, please let me know if it works on other hardware configurations - it is generic and should work most devices
+- If entering VR keeps failing with "session configuration is not supported", restart SteamVR
 
-If you don't see the white cardboard icon in the bottom right hand corner of the youtube.com video then the extension is not installed or disabled
+If you don't see the white cardboard icon in the bottom right hand corner of a YouTube video then the extension is not installed or disabled
 
-There isn't much error handling, pull requests welcome
+### Development
+Sources are in `src/`: `youtube.js` (YouTube integration), `generic.js` (toolbar button on other sites) and `vr-player.js` (the shared WebXR player). `background.js` is the extension's service worker and isn't bundled.
+
+```
+npm install
+npm run build   # bundles src/ into script.js and generic.js next to manifest.json
+npm run watch   # unminified build with source maps, rebuilt on change
+```
+The built `script.js` and `generic.js` are committed so the folder can be loaded unpacked straight from a checkout.

@@ -1,9 +1,10 @@
 const path = require('path');
 
+// Sources live in src/; the bundles land next to manifest.json, which loads them
 module.exports = {
   entry: {
-    script: './index.js',
-    generic: './generic.js',
+    script: './src/youtube.js',
+    generic: './src/generic.js',
   },
   output: {
     filename: '[name].js',

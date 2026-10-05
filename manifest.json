@@ -1,9 +1,9 @@
 {
-    "name": "Enable Youtube PC VR in Chromium browsers",
-    "version": "1.0.2",
-    "description": "Enables PC-VR for YouTube 360°, VR180 and 3D videos, and for videos on other sites via the toolbar button - Tested on HTC Vive Cosmos",
+    "name": "video2webxr",
+    "version": "2.0.0",
+    "description": "Watch YouTube 360°/VR180 videos and videos on other sites in your PC VR headset via WebXR",
     "manifest_version": 3,
-    "author": "feedthedogs",
+    "author": "phit, based on EnableYoutubePCVR by feedthedogs",
     "content_scripts": [
         {
             "matches": [
@@ -28,5 +28,6 @@
     ],
     "icons": {
         "128": "icon.png"
-    }
+    },
+    "homepage_url": "https://github.com/phit/video2webxr"
 }

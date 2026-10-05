@@ -1,12 +1,13 @@
 {
-  "name": "Enable Youtube PC VR in Chromium",
-  "version": "1.0.2",
-  "description": "Enables PC-VR for non-3D spherical youtube videos - Tested on HTC Vive Cosmos",
-  "main": "index.js",
+  "name": "video2webxr",
+  "version": "2.0.0",
+  "description": "Watch YouTube 360°/VR180 videos and videos on other sites in a PC VR headset via WebXR",
+  "main": "src/youtube.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "webpack --mode production",
+    "watch": "webpack --mode development --devtool inline-source-map --watch"
   },
-  "author": "feedthedogs",
+  "author": "phit (based on EnableYoutubePCVR by feedthedogs)",
   "license": "ISC",
   "dependencies": {
     "three": "^0.186.1"
@@ -14,5 +15,9 @@
   "devDependencies": {
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phit/video2webxr.git"
   }
 }
