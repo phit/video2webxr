@@ -50,14 +50,12 @@ You can switch the projection while in VR. If the image looks jumbled into squar
 - DRM-protected videos (Netflix, Prime Video, Disney+ etc.) can't be shown: the browser won't hand protected frames to WebGL
 - Videos served from another domain without CORS headers can't be read by WebGL either; the extension tells you when that's the case
 - On other sites the toolbar button can only reach videos in the page itself and in same-site frames
+- The Steam Frame's built-in browser doesn't work with it yet; see [saphid/chromium-webxr-steam-frame](https://github.com/saphid/chromium-webxr-steam-frame) for a community workaround
 
 ### Troubleshooting
-If it says "VR NOT SUPPORTED" then the browser hasn't detected your hardware
-- Make sure your VR is turned on and calibrated to your room
-- Make sure you have given the site permission to access "Virtual reality" in the "site permissions"
-- Microsoft Edge may not detect SteamVR by default; start it with `--enable-features=WebXR,OpenXR --force-webxr-runtime=openxr`
-- Only one browser can use the headset at a time; close other browser windows that have entered VR
-- If entering VR keeps failing with "session configuration is not supported", restart SteamVR
+If "Enter VR" says "VR NOT SUPPORTED", the browser hasn't found your headset:
+- Make sure SteamVR is running and the headset is connected
+- Set "WebXR runtime" to OpenXR at `chrome://flags/#webxr-runtime` and restart the browser
 
 If you don't see the white cardboard icon in the bottom right hand corner of a YouTube video then the extension is not installed or disabled
 
