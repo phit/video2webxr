@@ -5,7 +5,7 @@ A Chromium extension that plays web videos in your PC VR headset through WebXR, 
 - **YouTube:** 360°, VR180 and 3D videos, via a cardboard icon in the player
 - **Other sites:** any non-DRM video, via the extension's toolbar button
 
-![A YouTube VR180 video in the headset, with the browser floating in SteamVR](webxr-steamframe.png)
+![A 3D 360° YouTube video in the headset, with the browser floating in SteamVR](docs/screenshots/headset-eac-3d.jpg)
 
 ### Install
 1. Install a Chromium based browser - Chrome, Edge, Brave etc.
@@ -23,12 +23,16 @@ A Chromium extension that plays web videos in your PC VR headset through WebXR, 
 3. Pick the video's projection in the dropdown next to the "Enter VR" button
 4. Click on the "Enter VR" button below the video
 
+   ![YouTube with the Enter VR button and the projection dropdown set to 360° EAC 3D](docs/screenshots/youtube-eac-3d.jpg)
+
 **On other sites**
 1. Start playing the video
 2. Click the video2webxr button in the browser toolbar (pin it from the extensions menu)
 3. Pick the projection in the popup (defaults to 180° 3D side by side; your choice is remembered) and click "Enter VR"
 4. Click the video in the page to enter VR. Browsers only start VR from a click in the page itself, so this step can't be skipped
 5. Open the popup again to change the projection while in VR, or click "Stop"
+
+   ![The video2webxr popup open from the toolbar on a Wikimedia Commons 360° video](docs/screenshots/other-sites-popup.jpg)
 
 The page itself gets no extra controls, so video lightboxes and overlays keep working.
 
