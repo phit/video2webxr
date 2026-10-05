@@ -123,22 +123,58 @@ function createController() {
         hint = null;
     }
 
+    // All events of the click that enters VR. The site must see none of them, or it may pause the
+    // video, close its lightbox or start a drag.
+    const GESTURE_EVENTS = ['pointerdown', 'mousedown', 'touchstart', 'pointerup', 'mouseup', 'touchend', 'click'];
+    let gestureStarted = false;
+    let vrRequested = false;
+    let gestureTimeout = null;
+
     function isOnVideo(event) {
+        const { clientX, clientY } = event.changedTouches?.[0] ?? event;
         const rect = video.getBoundingClientRect();
-        return (
-            event.clientX >= rect.left &&
-            event.clientX <= rect.right &&
-            event.clientY >= rect.top &&
-            event.clientY <= rect.bottom
-        );
+        return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
     }
 
-    // capture phase, so the site doesn't also see the click (and e.g. pause the video)
-    function onClick(event) {
-        if (!isOnVideo(event)) return;
+    // Chrome only starts VR from events that count as user activation
+    function activatesUser(event) {
+        if (event.type === 'pointerdown') return event.pointerType !== 'touch';
+        if (event.type === 'pointerup') return event.pointerType === 'touch';
+        return event.type === 'mousedown' || event.type === 'touchend' || event.type === 'click';
+    }
+
+    function listenToGesture(listen) {
+        for (const type of GESTURE_EVENTS) {
+            if (listen) window.addEventListener(type, onGestureEvent, { capture: true, passive: false });
+            else window.removeEventListener(type, onGestureEvent, true);
+        }
+    }
+
+    // capture phase on window, so this runs before the site's own handlers
+    function onGestureEvent(event) {
+        if (!gestureStarted) {
+            if (!isOnVideo(event)) return;
+            gestureStarted = true;
+            // swallow the rest of this click wherever it ends, then stop listening
+            gestureTimeout = setTimeout(endGesture, 1000);
+        }
         event.preventDefault();
-        event.stopPropagation();
-        window.removeEventListener('click', onClick, true);
+        event.stopImmediatePropagation();
+        if (!vrRequested && activatesUser(event)) {
+            vrRequested = true;
+            startVR();
+        }
+        if (event.type === 'click') endGesture();
+    }
+
+    function endGesture() {
+        clearTimeout(gestureTimeout);
+        listenToGesture(false);
+        gestureStarted = false;
+        vrRequested = false;
+    }
+
+    function startVR() {
         hideHint();
         // the site doesn't see this click, so start playback ourselves
         if (video.paused) video.play().catch(() => {});
@@ -160,7 +196,7 @@ function createController() {
     }
 
     function stop() {
-        window.removeEventListener('click', onClick, true);
+        endGesture();
         hideHint();
         clearInterval(removedCheck);
         video?.removeEventListener('emptied', stop);
@@ -186,7 +222,7 @@ function createController() {
         removedCheck = setInterval(() => {
             if (!video.isConnected) stop();
         }, 1000);
-        window.addEventListener('click', onClick, true);
+        listenToGesture(true);
         showHint('Click the video to enter VR');
         state = 'armed';
         return { state };
