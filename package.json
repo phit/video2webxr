@@ -1,23 +1,28 @@
 {
-  "name": "video2webxr",
-  "version": "2.0.0",
-  "description": "Watch YouTube 360°/VR180 videos and videos on other sites in a PC VR headset via WebXR",
-  "main": "src/youtube.js",
-  "scripts": {
-    "build": "node scripts/build.mjs",
-    "watch": "node scripts/build.mjs --watch"
-  },
-  "author": "phit (based on EnableYoutubePCVR by feedthedogs)",
-  "license": "ISC",
-  "dependencies": {
-    "three": "^0.186.1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/phit/video2webxr.git"
-  },
-  "devDependencies": {
-    "esbuild": "^0.28.2"
-  },
-  "type": "module"
+    "name": "video2webxr",
+    "version": "2.0.0",
+    "description": "Watch YouTube 360°/VR180 videos and videos on other sites in a PC VR headset via WebXR",
+    "main": "src/youtube.js",
+    "scripts": {
+        "build": "node scripts/build.mjs",
+        "watch": "node scripts/build.mjs --watch",
+        "check": "biome check .",
+        "fix": "biome check --write .",
+        "changelog": "git-cliff --unreleased"
+    },
+    "author": "phit (based on EnableYoutubePCVR by feedthedogs)",
+    "license": "ISC",
+    "dependencies": {
+        "three": "^0.186.1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/phit/video2webxr.git"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^2.5.15",
+        "esbuild": "^0.28.2",
+        "git-cliff": "^2.14.2"
+    },
+    "type": "module"
 }

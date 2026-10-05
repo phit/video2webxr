@@ -13,6 +13,8 @@ jobs:
       contents: write # create releases for tags
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # git-cliff needs the tags and history for release notes
 
       - uses: actions/setup-node@v7
         with:
@@ -20,6 +22,7 @@ jobs:
           cache: npm
 
       - run: npm ci
+      - run: npx biome ci .
       - run: npm run build
 
       # unzips to a folder that can be loaded unpacked
@@ -39,4 +42,5 @@ jobs:
             exit 1
           fi
           (cd dist && zip -r "../video2webxr-$version.zip" .)
-          gh release create "$GITHUB_REF_NAME" "video2webxr-$version.zip" --title "video2webxr $version" --generate-notes
+          npx git-cliff --latest --strip all > notes.md
+          gh release create "$GITHUB_REF_NAME" "video2webxr-$version.zip" --title "video2webxr $version" --notes-file notes.md
