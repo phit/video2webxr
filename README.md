@@ -13,9 +13,13 @@ A Chromium extension that plays web videos in your PC VR headset through WebXR, 
 3. Open the extensions page in the browser and enable developer mode
 4. Click "Load Unpacked" and choose the folder
 
+**On the Steam Frame:** works in Chrome Canary running on the Frame itself; see [phit/chromium-webxr-steam-frame (google branch)](https://github.com/phit/chromium-webxr-steam-frame/tree/google) for how to set it up
+
 ### Usage
 1. Turn VR on first (e.g. start SteamVR)
 2. Start a new browser so that it detects the hardware
+
+On the Steam Frame itself, skip these two steps: just open Chrome Canary.
 
 **On YouTube**
 1. Open a 360° or VR180 video, e.g. on https://www.youtube.com/vr/
@@ -55,7 +59,6 @@ You can switch the projection while in VR. If the image looks jumbled into squar
 - DRM-protected videos (Netflix, Prime Video, Disney+ etc.) can't be shown: the browser won't hand protected frames to WebGL
 - Videos served from another domain without CORS headers can't be read by WebGL either; the extension retries with CORS turned on and tells you if that doesn't work
 - On other sites the toolbar button can only reach videos in the page itself and in same-site frames
-- The Steam Frame's built-in browser doesn't work with it yet; see [saphid/chromium-webxr-steam-frame](https://github.com/saphid/chromium-webxr-steam-frame) for a community workaround
 
 ### Troubleshooting
 If "Enter VR" says "VR NOT SUPPORTED", the browser hasn't found your headset:
