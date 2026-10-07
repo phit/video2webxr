@@ -76,9 +76,7 @@ You can switch the projection while in VR. If the image looks jumbled into squar
 - On other sites the toolbar button can only reach videos in the page itself and in same-site frames
 
 ### Troubleshooting
-If "Enter VR" says "VR NOT SUPPORTED", the browser hasn't found your headset:
-- Make sure SteamVR is running and the headset is connected
-- Set "WebXR runtime" to OpenXR at `chrome://flags/#webxr-runtime` and restart the browser
+If "Enter VR" says "VR NOT SUPPORTED", the browser hasn't found your headset: make sure SteamVR is running and the headset is connected, then restart the browser.
 
 If clicking the video doesn't enter VR, close other browser windows that use the headset; only one browser can be in VR at a time. The popup shows why the last attempt failed.
 
