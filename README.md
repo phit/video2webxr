@@ -46,6 +46,15 @@ On the Steam Frame itself, skip these two steps: just open Chrome Canary.
 
 The page itself gets no extra controls, so video lightboxes and overlays keep working.
 
+### Videos to try
+
+| Video | Where | Projection |
+|---|---|---|
+| [Caminandes VR demo](https://www.youtube.com/watch?v=uvy--ElpfF8) | YouTube | 360° EAC 3D |
+| [Tomorrowland 360°](https://www.youtube.com/watch?v=y0k8Akk1yN0) | YouTube | 360° EAC (YouTube default) |
+| [Elton John VR180](https://www.youtube.com/watch?v=9r6NI9m_IxM) | YouTube | 180° |
+| [Bled Lake 360° timelapse](https://commons.wikimedia.org/wiki/File:Video_360%C2%B0._Timelapse._Bled_Lake_in_Slovenia..webm) | Wikimedia Commons, via the toolbar button | 360° equirectangular |
+
 ### Projections
 
 | Projection | Use it for |
