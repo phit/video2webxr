@@ -8,10 +8,16 @@ A Chromium extension that plays web videos in your PC VR headset through WebXR, 
 ![A 3D 360° YouTube video in the headset, with the browser floating in SteamVR](docs/screenshots/headset-eac-3d.jpg)
 
 ### Install
-1. Install a Chromium based browser - Chrome, Edge, Brave etc.
-2. Download `video2webxr-<version>.zip` from the [latest release](https://github.com/phit/video2webxr/releases/latest) and unzip it to a folder
-3. Open the extensions page in the browser and enable developer mode
-4. Click "Load Unpacked" and choose the folder
+
+**From a store**
+- Chrome, Brave and other Chromium browsers: Chrome Web Store (in review)
+  <!-- [Chrome Web Store](https://chromewebstore.google.com/detail/video2webxr/CHROME_ITEM_ID) -->
+- Microsoft Edge: [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/video2webxr/pegmdbgaelolcgnfadanmahjnlallpon)
+
+**Manually**
+1. Download `video2webxr-<version>.zip` from the [latest release](https://github.com/phit/video2webxr/releases/latest) and unzip it to a folder
+2. Open the extensions page in the browser and enable developer mode
+3. Click "Load Unpacked" and choose the folder
 
 **On the Steam Frame:** works in Chrome Canary running on the Frame itself; see [phit/chromium-webxr-steam-frame (google branch)](https://github.com/phit/chromium-webxr-steam-frame/tree/google) for how to set it up
 
