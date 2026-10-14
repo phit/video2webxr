@@ -10,8 +10,7 @@ A Chromium extension that plays web videos in your PC VR headset through WebXR, 
 ### Install
 
 **From a store**
-- Chrome, Brave and other Chromium browsers: Chrome Web Store (in review)
-  <!-- [Chrome Web Store](https://chromewebstore.google.com/detail/video2webxr/CHROME_ITEM_ID) -->
+- Chrome, Brave and other Chromium browsers: [Chrome Web Store](https://chromewebstore.google.com/detail/video2webxr/bacbclkmpiflnfeggheehlhhdmjjcfni)
 - Microsoft Edge: [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/video2webxr/pegmdbgaelolcgnfadanmahjnlallpon)
 
 **Manually**
