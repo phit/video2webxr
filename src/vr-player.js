@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
 import { PROJECTION_LABELS } from './projections.js';
+import { VRControls } from './vr-controls.js';
 
 // Chrome exposes XRWebGLBinding.createProjectionLayer even when the session isn't granted
 // the 'layers' feature. three.js only checks that the method exists, sets up a projection
@@ -180,13 +181,14 @@ function eacStereoMeshes(material) {
     ];
 }
 
-// A 2m tall screen 3m in front of the viewer, for videos that are only available flat
+// A 2m tall screen, for videos that are only available flat. VRPlayer puts it in its movable
+// screen group, 3m in front of the viewer to start with.
+const SCREEN_DISTANCE = 3;
+
 function flatScreenMesh(material) {
     const video = material.map.image;
     const aspect = video.videoWidth && video.videoHeight ? video.videoWidth / video.videoHeight : 16 / 9;
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2 * aspect, 2), material);
-    mesh.position.set(0, 0, -3);
-    return mesh;
+    return new THREE.Mesh(new THREE.PlaneGeometry(2 * aspect, 2), material);
 }
 
 // Renders a <video> element into a WebXR session with a switchable projection
@@ -196,7 +198,9 @@ export class VRPlayer {
         this.projection = projection;
         this.meshes = [];
 
-        this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 2000);
+        // a near plane of a few centimetres, so the controls panel and a screen pulled close
+        // aren't clipped away (the XR session takes its depth range from this camera)
+        this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 2000);
         this.camera.layers.enable(1); // render left view when no stereo available
 
         const texture = new THREE.VideoTexture(video);
@@ -207,6 +211,11 @@ export class VRPlayer {
 
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x101010);
+        // the 360°/180° meshes, turned by "Recenter", and the flat screen, which can be grabbed
+        this.world = new THREE.Group();
+        this.screen = new THREE.Group();
+        this.placeScreen(new THREE.Vector3(), 0);
+        this.scene.add(this.world, this.screen);
         this.setProjection(projection);
         // the geometry depends on the video's aspect ratio, which can change with quality switches
         this.onVideoResize = () => this.setProjection(this.projection);
@@ -217,7 +226,13 @@ export class VRPlayer {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.xr.enabled = true;
         this.renderer.xr.setReferenceSpaceType('local');
-        this.renderer.setAnimationLoop(() => this.renderer.render(this.scene, this.camera));
+        this.vrControls = new VRControls(this);
+        this.timer = new THREE.Timer();
+        this.renderer.setAnimationLoop((timestamp) => {
+            this.timer.update(timestamp);
+            this.vrControls.update(this.timer.getDelta());
+            this.renderer.render(this.scene, this.camera);
+        });
 
         this.onWindowResize = () => {
             if (this.renderer.xr.isPresenting) return;
@@ -247,7 +262,16 @@ export class VRPlayer {
         if (this.select) this.select.value = name;
         this.disposeMeshes();
         this.meshes = PROJECTIONS[name].build(this.material);
-        for (const mesh of this.meshes) this.scene.add(mesh);
+        const parent = name === 'FLAT' ? this.screen : this.world;
+        for (const mesh of this.meshes) parent.add(mesh);
+    }
+
+    // Puts the flat screen in front of a viewer at position, looking towards yaw
+    placeScreen(position, yaw) {
+        const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+        this.screen.position.copy(position).addScaledVector(forward, SCREEN_DISTANCE);
+        this.screen.rotation.set(0, yaw, 0);
+        this.screen.scale.setScalar(1);
     }
 
     // The Enter VR button and projection dropdown side by side, plus any extra buttons
@@ -280,7 +304,7 @@ export class VRPlayer {
 
     disposeMeshes() {
         for (const mesh of this.meshes) {
-            this.scene.remove(mesh);
+            mesh.removeFromParent();
             mesh.geometry.dispose();
             if (mesh.material !== this.material) mesh.material.dispose();
         }
@@ -291,6 +315,7 @@ export class VRPlayer {
         const session = this.renderer.xr.getSession();
         if (session) await session.end().catch(() => {});
         this.renderer.setAnimationLoop(null);
+        this.vrControls.dispose();
         this.video.removeEventListener('resize', this.onVideoResize);
         window.removeEventListener('resize', this.onWindowResize);
         this.disposeMeshes();
