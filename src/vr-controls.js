@@ -687,7 +687,7 @@ export class VRControls {
         const label = PROJECTION_LABELS.find(([id]) => id === this.player.projection)?.[1] ?? '';
         const labelX = (AREAS.previousProjection.x + AREAS.previousProjection.w + AREAS.nextProjection.x) / 2;
         text('PROJECTION', labelX, ROW_BOTTOM + 26, { size: 18, color: THEME.label, weight: 600, spacing: 2 });
-        text(label.replace(/ \(.*\)$/, ''), labelX, ROW_BOTTOM + 60, { size: 24 });
+        text(label, labelX, ROW_BOTTOM + 60, { size: 24 });
 
         iconButton('recenter', () => text('Recenter', 0, 1, { size: 24 }), true);
         iconButton('exit', () => text('Exit VR', 0, 1, { size: 24 }), true);

@@ -1,6 +1,6 @@
 // Projection ids and labels, in dropdown order. Kept free of three.js so the popup can use it.
 export const PROJECTION_LABELS = [
-    ['EAC', '360° EAC (YouTube default)'],
+    ['EAC', '360° EAC'],
     ['EAC_LR', '360° EAC 3D'],
     ['CUBE', '360° cubemap'],
     ['360', '360° equirectangular'],
