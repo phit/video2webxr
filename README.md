@@ -37,7 +37,7 @@ On the Steam Frame itself, skip these two steps: just open Chrome Canary.
 **On other sites**
 1. Start playing the video
 2. Click the video2webxr button in the browser toolbar (pin it from the extensions menu)
-3. Pick the projection in the popup (defaults to 180° 3D side by side; your choice is remembered) and click "Enter VR"
+3. Pick the projection in the popup (defaults to Flat screen; your choice is remembered) and click "Enter VR"
 4. Click the video in the page to enter VR. Browsers only start VR from a click in the page itself, so this step can't be skipped
 5. Open the popup again to change the projection while in VR, or click "Stop"
 
@@ -64,8 +64,8 @@ The page itself gets no extra controls, so video lightboxes and overlays keep wo
 | 360° equirectangular | 360° videos served as a single equirectangular image (2:1) |
 | 360° 3D top/bottom, side by side | 3D equirectangular 360° videos |
 | 180° | VR180 videos on YouTube, and other mono 180° videos |
-| 180° 3D side by side (other sites' default) | 3D 180° videos with both eyes side by side, the most common VR video format |
-| Flat screen | normal videos, shown on a virtual screen in front of you |
+| 180° 3D side by side | 3D 180° videos with both eyes side by side, the most common VR video format |
+| Flat screen (other sites' default) | normal videos, shown on a virtual screen in front of you |
 
 You can switch the projection while in VR. If the image looks jumbled into squares, try a 360° EAC option; if it looks stretched or doubled, try the others.
 

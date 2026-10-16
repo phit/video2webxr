@@ -11,5 +11,5 @@ export const PROJECTION_LABELS = [
     ['FLAT', 'Flat screen'],
 ];
 
-// Most VR videos outside YouTube are 180° side by side
-export const DEFAULT_PROJECTION = '180_LR';
+// Most videos on the web are plain flat videos
+export const DEFAULT_PROJECTION = 'FLAT';
