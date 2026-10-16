@@ -184,7 +184,6 @@ function eacStereoMeshes(material) {
 // screen group, 3m in front of the viewer to start with.
 const SCREEN_DISTANCE = 3;
 const BACKGROUND = 0x101010;
-
 function flatScreenMesh(material) {
     const video = material.map.image;
     const aspect = video.videoWidth && video.videoHeight ? video.videoWidth / video.videoHeight : 16 / 9;
@@ -233,7 +232,9 @@ export class VRPlayer {
         this.onVideoResize = () => this.setProjection(this.projection);
         video.addEventListener('resize', this.onVideoResize);
 
-        this.renderer = new THREE.WebGLRenderer();
+        // antialias also turns on multisampling for the headset's image (three.js passes it on
+        // to the XR layer), which smooths the edges of the screen, panel and lasers
+        this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.xr.enabled = true;
