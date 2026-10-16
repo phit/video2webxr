@@ -41,10 +41,11 @@ const AREAS = {
     forward: { x: 208, y: ROW_BOTTOM, w: 88, h: ROW_HEIGHT },
     mute: { x: 328, y: ROW_BOTTOM, w: 88, h: ROW_HEIGHT },
     volume: { x: 428, y: ROW_BOTTOM + 28, w: 172, h: 36 },
-    previousProjection: { x: 628, y: ROW_BOTTOM, w: 56, h: ROW_HEIGHT },
-    nextProjection: { x: 932, y: ROW_BOTTOM, w: 56, h: ROW_HEIGHT },
-    recenter: { x: 1012, y: ROW_BOTTOM, w: 124, h: ROW_HEIGHT },
-    exit: { x: 1144, y: ROW_BOTTOM, w: 120, h: ROW_HEIGHT },
+    previousProjection: { x: 616, y: ROW_BOTTOM, w: 56, h: ROW_HEIGHT },
+    nextProjection: { x: 912, y: ROW_BOTTOM, w: 56, h: ROW_HEIGHT },
+    passthrough: { x: 984, y: ROW_BOTTOM, w: 88, h: ROW_HEIGHT },
+    recenter: { x: 1080, y: ROW_BOTTOM, w: 88, h: ROW_HEIGHT },
+    exit: { x: 1176, y: ROW_BOTTOM, w: 88, h: ROW_HEIGHT },
 };
 const SLIDERS = new Set(['seek', 'volume']);
 
@@ -59,6 +60,7 @@ const THEME = {
     separator: '#3a3f4a',
     text: '#dcdedf',
     label: '#b8bcbf',
+    disabled: '#5c616b',
     font: '"Motiva Sans", "Segoe UI", system-ui, sans-serif',
 };
 
@@ -419,6 +421,9 @@ export class VRControls {
                 this.player.setProjection(ids[index]);
                 break;
             }
+            case 'passthrough':
+                if (this.player.passthroughAvailable) this.player.setPassthrough(!this.player.passthrough);
+                break;
             case 'recenter':
                 this.recenter();
                 break;
@@ -539,6 +544,8 @@ export class VRControls {
             video.muted,
             video.volume.toFixed(2),
             this.player.projection,
+            this.player.passthrough,
+            this.player.passthroughAvailable,
             [...hovered].join(),
             Math.floor(video.buffered.length ? video.buffered.end(video.buffered.length - 1) : 0),
         ].join('|');
@@ -572,14 +579,16 @@ export class VRControls {
             const line = w * 0.5;
             roundRect(x + (w - line) / 2, y + h - 10, line, 5, 2.5, THEME.accent);
         };
-        const iconButton = (name, drawIcon, filled = false) => {
+        // filled: a grey button; active: a switched-on toggle, drawn blue; disabled: dimmed
+        const iconButton = (name, drawIcon, { filled = false, active = false, disabled = false } = {}) => {
             const { x, y, w, h } = AREAS[name];
-            if (hovered.has(name)) focus(x, y, w, h);
+            if (hovered.has(name) && !disabled) focus(x, y, w, h);
             else if (filled) roundRect(x, y, w, h, 4, THEME.button);
             c.save();
             c.translate(x + w / 2, y + h / 2);
-            c.fillStyle = THEME.text;
-            c.strokeStyle = THEME.text;
+            const color = disabled ? THEME.disabled : active ? THEME.accent : THEME.text;
+            c.fillStyle = color;
+            c.strokeStyle = color;
             c.lineWidth = 4;
             c.lineCap = 'round';
             c.lineJoin = 'round';
@@ -689,8 +698,59 @@ export class VRControls {
         text('PROJECTION', labelX, ROW_BOTTOM + 26, { size: 18, color: THEME.label, weight: 600, spacing: 2 });
         text(label, labelX, ROW_BOTTOM + 60, { size: 24 });
 
-        iconButton('recenter', () => text('Recenter', 0, 1, { size: 24 }), true);
-        iconButton('exit', () => text('Exit VR', 0, 1, { size: 24 }), true);
+        // passthrough: a headset with the room's horizon showing through its visor
+        iconButton(
+            'passthrough',
+            () => {
+                c.beginPath();
+                c.roundRect(-26, -15, 52, 30, 10);
+                c.stroke();
+                c.beginPath();
+                c.moveTo(-14, 5);
+                c.lineTo(-5, -4);
+                c.lineTo(3, 3);
+                c.lineTo(8, -2);
+                c.lineTo(14, 5);
+                c.stroke();
+            },
+            { filled: true, active: this.player.passthrough, disabled: !this.player.passthroughAvailable },
+        );
+        // recenter: a target
+        iconButton(
+            'recenter',
+            () => {
+                c.beginPath();
+                c.arc(0, 0, 14, 0, Math.PI * 2);
+                c.moveTo(0, -24);
+                c.lineTo(0, -8);
+                c.moveTo(0, 8);
+                c.lineTo(0, 24);
+                c.moveTo(-24, 0);
+                c.lineTo(-8, 0);
+                c.moveTo(8, 0);
+                c.lineTo(24, 0);
+                c.stroke();
+            },
+            { filled: true },
+        );
+        // exit VR: an arrow out of a door
+        iconButton(
+            'exit',
+            () => {
+                c.beginPath();
+                c.moveTo(2, -20);
+                c.lineTo(-20, -20);
+                c.lineTo(-20, 20);
+                c.lineTo(2, 20);
+                c.moveTo(-6, 0);
+                c.lineTo(22, 0);
+                c.moveTo(13, -9);
+                c.lineTo(22, 0);
+                c.lineTo(13, 9);
+                c.stroke();
+            },
+            { filled: true },
+        );
 
         this.texture.needsUpdate = true;
     }

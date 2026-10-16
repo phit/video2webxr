@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { VRButton } from 'three/addons/webxr/VRButton.js';
 import { PROJECTION_LABELS } from './projections.js';
 import { VRControls } from './vr-controls.js';
 
@@ -184,6 +183,7 @@ function eacStereoMeshes(material) {
 // A 2m tall screen, for videos that are only available flat. VRPlayer puts it in its movable
 // screen group, 3m in front of the viewer to start with.
 const SCREEN_DISTANCE = 3;
+const BACKGROUND = 0x101010;
 
 function flatScreenMesh(material) {
     const video = material.map.image;
@@ -210,7 +210,19 @@ export class VRPlayer {
         this.material = new THREE.MeshBasicMaterial({ map: texture });
 
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x101010);
+        // In AR sessions the headset shows the room wherever the image is transparent. The
+        // render loop clears the frame itself (see render()), opaque dark grey normally and
+        // transparent for passthrough, because three.js would always clear to transparent there.
+        this.passthrough = false;
+        // AR sessions can show the headset's passthrough; asked early, so entering VR doesn't
+        // have to wait for the answer and lose the click's user activation
+        this.arSupported = false;
+        navigator.xr
+            ?.isSessionSupported('immersive-ar')
+            .then((supported) => {
+                this.arSupported = supported;
+            })
+            .catch(() => {});
         // the 360°/180° meshes, turned by "Recenter", and the flat screen, which can be grabbed
         this.world = new THREE.Group();
         this.screen = new THREE.Group();
@@ -226,13 +238,16 @@ export class VRPlayer {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.xr.enabled = true;
         this.renderer.xr.setReferenceSpaceType('local');
+        this.renderer.autoClear = false;
         this.vrControls = new VRControls(this);
         this.timer = new THREE.Timer();
         this.renderer.setAnimationLoop((timestamp) => {
             this.timer.update(timestamp);
             this.vrControls.update(this.timer.getDelta());
-            this.renderer.render(this.scene, this.camera);
+            this.render();
         });
+        this.onSessionEnd = () => this.setPassthrough(false);
+        this.renderer.xr.addEventListener('sessionend', this.onSessionEnd);
 
         this.onWindowResize = () => {
             if (this.renderer.xr.isPresenting) return;
@@ -244,13 +259,32 @@ export class VRPlayer {
     }
 
     // Starts an immersive session. Chrome only allows this from a user gesture in the page,
-    // so call it synchronously from a click handler.
+    // so call it synchronously from a click handler. Where the browser supports AR, the
+    // session is an AR one, which looks the same until passthrough is turned on.
     async enterVR() {
-        const session = await navigator.xr.requestSession('immersive-vr', {
+        const mode = this.arSupported ? 'immersive-ar' : 'immersive-vr';
+        const session = await navigator.xr.requestSession(mode, {
             optionalFeatures: ['local-floor', 'bounded-floor'],
         });
         await this.renderer.xr.setSession(session);
         return session;
+    }
+
+    // Whether the current session can show the room around the video
+    get passthroughAvailable() {
+        return this.renderer.xr.isPresenting && this.renderer.xr.getEnvironmentBlendMode() === 'alpha-blend';
+    }
+
+    setPassthrough(on) {
+        this.passthrough = on;
+    }
+
+    // Clears the frame (in VR, the headset's image, which three.js binds before the animation
+    // loop runs): alpha 1 hides the room in AR sessions, alpha 0 lets it show through
+    render() {
+        this.renderer.setClearColor(BACKGROUND, this.passthrough ? 0 : 1);
+        this.renderer.clear();
+        this.renderer.render(this.scene, this.camera);
     }
 
     get canvas() {
@@ -278,10 +312,34 @@ export class VRPlayer {
     createControls(...extraButtons) {
         this.controls = document.createElement('div');
         Object.assign(this.controls.style, { display: 'flex', justifyContent: 'center', gap: '8px' });
-        const vrButton = VRButton.createButton(this.renderer);
-        vrButton.style.position = 'static';
-        this.controls.append(vrButton, this.createProjectionSelect(), ...extraButtons);
+        this.controls.append(this.createVRButton(), this.createProjectionSelect(), ...extraButtons);
         return this.controls;
+    }
+
+    // Like three.js' VRButton, but enters through enterVR(), which picks AR when available
+    createVRButton() {
+        const button = document.createElement('button');
+        styleControl(button);
+        button.style.width = '100px';
+        button.textContent = 'ENTER VR';
+        button.disabled = true;
+        const supported = (mode) => navigator.xr?.isSessionSupported(mode).catch(() => false) ?? false;
+        Promise.all([supported('immersive-vr'), supported('immersive-ar')]).then(([vr, ar]) => {
+            button.disabled = !vr && !ar;
+            if (button.disabled) button.textContent = 'VR NOT SUPPORTED';
+        });
+        button.onclick = () => {
+            const session = this.renderer.xr.getSession();
+            if (session) session.end();
+            else this.enterVR().catch((e) => console.warn('video2webxr: entering VR failed:', e));
+        };
+        this.renderer.xr.addEventListener('sessionstart', () => {
+            button.textContent = 'EXIT VR';
+        });
+        this.renderer.xr.addEventListener('sessionend', () => {
+            button.textContent = 'ENTER VR';
+        });
+        return button;
     }
 
     createProjectionSelect() {
@@ -321,6 +379,7 @@ export class VRPlayer {
         this.disposeMeshes();
         this.material.map.dispose();
         this.material.dispose();
+        this.renderer.xr.removeEventListener('sessionend', this.onSessionEnd);
         this.canvas.remove();
         if (this.controls) this.controls.remove();
         this.renderer.dispose();
