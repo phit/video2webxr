@@ -34,7 +34,7 @@ const AXIS_STICK_Y = 3;
 const ROW_TOP = 24;
 const ROW_BOTTOM = 140;
 const ROW_HEIGHT = 92;
-const AREAS = {
+const AREAS_WITH_PASSTHROUGH = {
     seek: { x: 150, y: ROW_TOP + 28, w: 980, h: 36 },
     back: { x: 16, y: ROW_BOTTOM, w: 88, h: ROW_HEIGHT },
     play: { x: 112, y: ROW_BOTTOM, w: 88, h: ROW_HEIGHT },
@@ -46,6 +46,12 @@ const AREAS = {
     passthrough: { x: 984, y: ROW_BOTTOM, w: 88, h: ROW_HEIGHT },
     recenter: { x: 1080, y: ROW_BOTTOM, w: 88, h: ROW_HEIGHT },
     exit: { x: 1176, y: ROW_BOTTOM, w: 88, h: ROW_HEIGHT },
+};
+// Without passthrough (no AR session) the projection switcher takes the button's place
+const { passthrough: _, ...withoutPassthrough } = AREAS_WITH_PASSTHROUGH;
+const AREAS_WITHOUT_PASSTHROUGH = {
+    ...withoutPassthrough,
+    nextProjection: { x: 1004, y: ROW_BOTTOM, w: 56, h: ROW_HEIGHT },
 };
 const SLIDERS = new Set(['seek', 'volume']);
 
@@ -60,7 +66,6 @@ const THEME = {
     separator: '#3a3f4a',
     text: '#dcdedf',
     label: '#b8bcbf',
-    disabled: '#5c616b',
     font: '"Motiva Sans", "Segoe UI", system-ui, sans-serif',
 };
 
@@ -333,9 +338,14 @@ export class VRControls {
         return { x: hit.uv.x * CANVAS_W, y: (1 - hit.uv.y) * CANVAS_H };
     }
 
+    // The panel's layout; the passthrough button only shows in sessions that can do it
+    get areas() {
+        return this.player.passthroughAvailable ? AREAS_WITH_PASSTHROUGH : AREAS_WITHOUT_PASSTHROUGH;
+    }
+
     areaAt(point) {
         if (!point) return null;
-        for (const [name, area] of Object.entries(AREAS)) {
+        for (const [name, area] of Object.entries(this.areas)) {
             // sliders get a taller hit area than they're drawn
             const pad = SLIDERS.has(name) ? 24 : 0;
             if (
@@ -434,7 +444,7 @@ export class VRControls {
     }
 
     slide(area, point) {
-        const { x, w } = AREAS[area];
+        const { x, w } = this.areas[area];
         const fraction = Math.min(1, Math.max(0, (point.x - x) / w));
         if (area === 'seek') {
             if (Number.isFinite(this.video.duration)) this.video.currentTime = fraction * this.video.duration;
@@ -553,6 +563,7 @@ export class VRControls {
         this.drawnState = state;
 
         const c = this.context;
+        const areas = this.areas;
         const roundRect = (x, y, w, h, r, color) => {
             c.fillStyle = color;
             c.beginPath();
@@ -579,14 +590,14 @@ export class VRControls {
             const line = w * 0.5;
             roundRect(x + (w - line) / 2, y + h - 10, line, 5, 2.5, THEME.accent);
         };
-        // filled: a grey button; active: a switched-on toggle, drawn blue; disabled: dimmed
-        const iconButton = (name, drawIcon, { filled = false, active = false, disabled = false } = {}) => {
-            const { x, y, w, h } = AREAS[name];
-            if (hovered.has(name) && !disabled) focus(x, y, w, h);
+        // filled: a grey button; active: a switched-on toggle, drawn blue
+        const iconButton = (name, drawIcon, { filled = false, active = false } = {}) => {
+            const { x, y, w, h } = areas[name];
+            if (hovered.has(name)) focus(x, y, w, h);
             else if (filled) roundRect(x, y, w, h, 4, THEME.button);
             c.save();
             c.translate(x + w / 2, y + h / 2);
-            const color = disabled ? THEME.disabled : active ? THEME.accent : THEME.text;
+            const color = active ? THEME.accent : THEME.text;
             c.fillStyle = color;
             c.strokeStyle = color;
             c.lineWidth = 4;
@@ -596,7 +607,7 @@ export class VRControls {
             c.restore();
         };
         const slider = (name, fraction, buffered = 0) => {
-            const { x, y, w, h } = AREAS[name];
+            const { x, y, w, h } = areas[name];
             const mid = y + h / 2;
             roundRect(x, mid - 4, w, 8, 4, THEME.track);
             if (buffered) roundRect(x, mid - 4, w * buffered, 8, 4, THEME.buffered);
@@ -655,7 +666,7 @@ export class VRControls {
         // Quick Settings slider row
         const duration = video.duration;
         const seekable = Number.isFinite(duration) && duration > 0;
-        const seekMid = AREAS.seek.y + AREAS.seek.h / 2;
+        const seekMid = areas.seek.y + areas.seek.h / 2;
         if (hovered.has('seek')) roundRect(16, ROW_TOP - 8, CANVAS_W - 32, 96, 4, THEME.focus);
         text(formatTime(video.currentTime), 80, seekMid, { color: THEME.label });
         text(seekable ? formatTime(duration) : 'LIVE', 1200, seekMid, {
@@ -686,7 +697,7 @@ export class VRControls {
         iconButton('forward', () => skipIcon(1));
         iconButton('mute', () => speaker(video.muted || video.volume === 0));
         if (hovered.has('volume')) {
-            const { x, w } = AREAS.volume;
+            const { x, w } = areas.volume;
             roundRect(x - 20, ROW_BOTTOM, w + 40, ROW_HEIGHT, 4, THEME.focus);
         }
         slider('volume', video.muted ? 0 : video.volume);
@@ -694,27 +705,30 @@ export class VRControls {
         iconButton('previousProjection', () => text('‹', 0, -3, { size: 52, weight: 400 }));
         iconButton('nextProjection', () => text('›', 0, -3, { size: 52, weight: 400 }));
         const label = PROJECTION_LABELS.find(([id]) => id === this.player.projection)?.[1] ?? '';
-        const labelX = (AREAS.previousProjection.x + AREAS.previousProjection.w + AREAS.nextProjection.x) / 2;
+        const labelX = (areas.previousProjection.x + areas.previousProjection.w + areas.nextProjection.x) / 2;
         text('PROJECTION', labelX, ROW_BOTTOM + 26, { size: 18, color: THEME.label, weight: 600, spacing: 2 });
         text(label, labelX, ROW_BOTTOM + 60, { size: 24 });
 
-        // passthrough: a headset with the room's horizon showing through its visor
-        iconButton(
-            'passthrough',
-            () => {
-                c.beginPath();
-                c.roundRect(-26, -15, 52, 30, 10);
-                c.stroke();
-                c.beginPath();
-                c.moveTo(-14, 5);
-                c.lineTo(-5, -4);
-                c.lineTo(3, 3);
-                c.lineTo(8, -2);
-                c.lineTo(14, 5);
-                c.stroke();
-            },
-            { filled: true, active: this.player.passthrough, disabled: !this.player.passthroughAvailable },
-        );
+        // passthrough, only in sessions that can show the room: a headset with the room's
+        // horizon showing through its visor
+        if (areas.passthrough) {
+            iconButton(
+                'passthrough',
+                () => {
+                    c.beginPath();
+                    c.roundRect(-26, -15, 52, 30, 10);
+                    c.stroke();
+                    c.beginPath();
+                    c.moveTo(-14, 5);
+                    c.lineTo(-5, -4);
+                    c.lineTo(3, 3);
+                    c.lineTo(8, -2);
+                    c.lineTo(14, 5);
+                    c.stroke();
+                },
+                { filled: true, active: this.player.passthrough },
+            );
+        }
         // recenter: a target
         iconButton(
             'recenter',

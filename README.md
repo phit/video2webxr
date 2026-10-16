@@ -59,7 +59,7 @@ A controls panel floats below the video: play/pause, the seek bar, skip 10 secon
 | Resize the flat screen | Drag its bottom right corner, or push the thumbstick left or right while holding it |
 | Play or pause | Click the flat screen |
 | Skip 10 seconds back or forward | Double click the left or right third of the flat screen, like on YouTube's mobile app; each further click skips another 10 seconds |
-| See the room around the screen | Press the passthrough button (the headset icon). It works where the browser supports AR with passthrough, e.g. Chrome Canary on the Steam Frame ([install guide](https://github.com/phit/chromium-webxr-steam-frame/tree/google#install-on-the-frame)), and is greyed out elsewhere |
+| See the room around the screen | Press the passthrough button (the headset icon). It works where the browser supports AR with passthrough, e.g. Chrome Canary on the Steam Frame ([install guide](https://github.com/phit/chromium-webxr-steam-frame/tree/google#install-on-the-frame)), and only shows there |
 | Put everything back in front of you | Recenter on the panel. On 360° and 180° videos it also turns the front of the video to where you look |
 
 ### Videos to try
