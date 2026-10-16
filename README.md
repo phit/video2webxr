@@ -2,8 +2,9 @@
 
 A Chromium extension that plays web videos in your PC VR headset through WebXR, using https://threejs.org/
 
-- **YouTube:** 360°, VR180 and 3D videos, via a cardboard icon in the player
+- **YouTube:** 360°, VR180, 3D and normal videos, via a cardboard icon in the player; the projection is detected automatically
 - **Other sites:** any non-DRM video, via the extension's toolbar button
+- **In VR:** a controls panel styled after the Steam Frame, and a flat screen you can move and resize with your controllers
 
 ![A 3D 360° YouTube video in the headset, with the browser floating in SteamVR](docs/screenshots/headset-eac-3d.jpg)
 
@@ -27,9 +28,9 @@ A Chromium extension that plays web videos in your PC VR headset through WebXR, 
 On the Steam Frame itself, skip these two steps: just open Chrome Canary.
 
 **On YouTube**
-1. Open a 360° or VR180 video, e.g. on https://www.youtube.com/vr/
+1. Open a video: 360° or VR180 (e.g. from https://www.youtube.com/vr/), or a normal one for the flat screen
 2. Click on the white cardboard icon in the bottom right hand corner of the video
-3. Pick the video's projection in the dropdown next to the "Enter VR" button
+3. The dropdown next to the "Enter VR" button shows the detected projection. 3D is recognised from the picture itself, so it switches to the 3D option once the video shows something other than a dark frame. Change it if it looks wrong
 4. Click on the "Enter VR" button below the video
 
    ![YouTube with the Enter VR button and the projection dropdown set to 360° EAC 3D](docs/screenshots/youtube-eac-3d.jpg)
@@ -39,18 +40,33 @@ On the Steam Frame itself, skip these two steps: just open Chrome Canary.
 2. Click the video2webxr button in the browser toolbar (pin it from the extensions menu)
 3. Pick the projection in the popup (defaults to Flat screen; your choice is remembered) and click "Enter VR"
 4. Click the video in the page to enter VR. Browsers only start VR from a click in the page itself, so this step can't be skipped
-5. Open the popup again to change the projection while in VR, or click "Stop"
+5. Use the controls in VR, or open the popup again to change the projection or click "Stop"
 
    ![The video2webxr popup open from the toolbar on a Wikimedia Commons 360° video](docs/screenshots/other-sites-popup.jpg)
 
 The page itself gets no extra controls, so video lightboxes and overlays keep working.
+
+**In VR**
+
+A controls panel floats below the video: play/pause, the seek bar, skip 10 seconds back or forward, mute and volume, the projection (‹ › to switch), Recenter and Exit VR.
+
+| To | Do this |
+|---|---|
+| Use a control | Point the controller's laser at it and pull the trigger; hold the trigger to drag the seek or volume slider |
+| Hide or show the panel | Press A/X or B/Y. Pulling the trigger away from the screen also shows it, and it comes back in front of you if it was out of view |
+| Move the panel or the flat screen | Drag the bar below it with the trigger, or hold the grip anywhere on it. It stays upright and turns to face you |
+| Move it closer or further away | While holding it, push the thumbstick forward or back |
+| Resize the flat screen | Drag its bottom right corner, or push the thumbstick left or right while holding it |
+| Play or pause | Click the flat screen |
+| Skip 10 seconds back or forward | Double click the left or right third of the flat screen, like on YouTube's mobile app; each further click skips another 10 seconds |
+| Put everything back in front of you | Recenter on the panel. On 360° and 180° videos it also turns the front of the video to where you look |
 
 ### Videos to try
 
 | Video | Where | Projection |
 |---|---|---|
 | [Caminandes VR demo](https://www.youtube.com/watch?v=uvy--ElpfF8) | YouTube | 360° EAC 3D |
-| [Tomorrowland 360°](https://www.youtube.com/watch?v=y0k8Akk1yN0) | YouTube | 360° EAC (YouTube default) |
+| [Tomorrowland 360°](https://www.youtube.com/watch?v=y0k8Akk1yN0) | YouTube | 360° EAC |
 | [Elton John VR180](https://www.youtube.com/watch?v=9r6NI9m_IxM) | YouTube | 180° |
 | [Bled Lake 360° timelapse](https://commons.wikimedia.org/wiki/File:Video_360%C2%B0._Timelapse._Bled_Lake_in_Slovenia..webm) | Wikimedia Commons, via the toolbar button | 360° equirectangular |
 
@@ -58,7 +74,7 @@ The page itself gets no extra controls, so video lightboxes and overlays keep wo
 
 | Projection | Use it for |
 |---|---|
-| 360° EAC (YouTube default) | 360° videos on YouTube - this is how YouTube serves them on desktop |
+| 360° EAC | 360° videos on YouTube - this is how YouTube serves them on desktop |
 | 360° EAC 3D | 3D 360° videos served as stereo EAC |
 | 360° cubemap | videos in a plain 3x2 cubemap layout |
 | 360° equirectangular | 360° videos served as a single equirectangular image (2:1) |
@@ -67,7 +83,7 @@ The page itself gets no extra controls, so video lightboxes and overlays keep wo
 | 180° 3D side by side | 3D 180° videos with both eyes side by side, the most common VR video format |
 | Flat screen (other sites' default) | normal videos, shown on a virtual screen in front of you |
 
-You can switch the projection while in VR. If the image looks jumbled into squares, try a 360° EAC option; if it looks stretched or doubled, try the others.
+You can switch the projection while in VR, from the panel. If the image looks jumbled into squares, try a 360° EAC option; if it looks stretched or doubled, try the others.
 
 ### Limitations
 - DRM-protected videos (Netflix, Prime Video, Disney+ etc.) can't be shown: the browser won't hand protected frames to WebGL
@@ -82,7 +98,14 @@ If clicking the video doesn't enter VR, close other browser windows that use the
 If you don't see the white cardboard icon in the bottom right hand corner of a YouTube video then the extension is not installed or disabled
 
 ### Development
-Sources are in `src/`: `youtube.js` (YouTube integration), `generic.js` (toolbar button on other sites), `vr-player.js` (the shared WebXR player) and `background.js` (the service worker).
+Sources are in `src/`:
+- `youtube.js`: YouTube integration (the cardboard icon, projection detection)
+- `youtube-page.js`: runs in YouTube's own page context to read the player's data
+- `stereo.js`: tells 3D frames from mono ones
+- `generic.js`, `popup.*`: the toolbar button and its popup for other sites
+- `vr-player.js`: the shared WebXR player and projections
+- `vr-controls.js`: the in-VR panel, lasers, moving and resizing
+- `projections.js`: the projection names, shared by the player and the popup
 
 ```
 npm install
