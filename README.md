@@ -50,6 +50,8 @@ The page itself gets no extra controls, so video lightboxes and overlays keep wo
 
 A controls panel floats below the video: play/pause, the seek bar, skip 10 seconds back or forward, mute and volume, the projection (‹ › to switch), passthrough, Recenter and Exit VR.
 
+![The controls panel below a flat screen video in the headset, with passthrough showing the room around it](docs/screenshots/headset-controls-passthrough.jpg)
+
 | To | Do this |
 |---|---|
 | Use a control | Point the controller's laser at it and pull the trigger; hold the trigger to drag the seek or volume slider |
