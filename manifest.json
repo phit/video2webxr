@@ -7,6 +7,11 @@
         {
             "matches": ["*://*.youtube.com/*"],
             "js": ["script.js"]
+        },
+        {
+            "matches": ["*://*.youtube.com/*"],
+            "js": ["youtube-page.js"],
+            "world": "MAIN"
         }
     ],
     "action": {

@@ -244,6 +244,7 @@ export class VRPlayer {
 
     setProjection(name) {
         this.projection = name;
+        if (this.select) this.select.value = name;
         this.disposeMeshes();
         this.meshes = PROJECTIONS[name].build(this.material);
         for (const mesh of this.meshes) this.scene.add(mesh);
@@ -273,6 +274,7 @@ export class VRPlayer {
         select.value = this.projection;
         styleControl(select);
         select.onchange = () => this.setProjection(select.value);
+        this.select = select;
         return select;
     }
 

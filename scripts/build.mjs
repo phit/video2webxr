@@ -29,7 +29,12 @@ for (const file of STATIC_FILES) {
 }
 
 const context = await esbuild.context({
-    entryPoints: { script: 'src/youtube.js', generic: 'src/generic.js', popup: 'src/popup.js' },
+    entryPoints: {
+        script: 'src/youtube.js',
+        'youtube-page': 'src/youtube-page.js',
+        generic: 'src/generic.js',
+        popup: 'src/popup.js',
+    },
     outdir,
     bundle: true,
     format: 'iife',
