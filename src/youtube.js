@@ -5,20 +5,19 @@ import { VRPlayer } from './vr-player.js';
 let player = null;
 
 // Function to be executed when the cardboard icon is clicked
-function handleCardboardIconClick() {
-    const videoElement = document.querySelectorAll('video')[0];
+function handleCardboardIconClick(event) {
     console.log('clicked cardboard button');
     if (player) {
         console.log('VR already enabled, ignoring click');
         return;
     }
-    EnableVRVideo(videoElement);
+    EnableVRVideo(event.currentTarget.closest('.html5-video-player'));
 }
 
 // Function to add the cardboard icon to a video element
 function addCardboardIconToVideo() {
     // Check if the img has already been added
-    const iconCheck = document.querySelector('#cardboardimg');
+    const iconCheck = document.querySelector('#movie_player #cardboardimg');
     if (iconCheck) {
         return;
     }
@@ -33,7 +32,8 @@ function addCardboardIconToVideo() {
     // Attach the onclick event to the cardboard icon
     iconImg.onclick = handleCardboardIconClick;
 
-    const rightControls = document.querySelector('.ytp-right-controls');
+    // the main player, not the home page's hover previews
+    const rightControls = document.querySelector('#movie_player .ytp-right-controls');
     if (rightControls) {
         // Append the image to the div element
         rightControls.appendChild(iconImg);
@@ -132,15 +132,19 @@ function detectStereo(vrPlayer, mono, votes = {}, attempt = 0) {
     if (checked < STEREO_MAX_CHECKS) setTimeout(() => detectStereo(vrPlayer, mono, votes, checked), STEREO_CHECK_MS);
 }
 
-function EnableVRVideo(videoElement) {
+// Everything is looked up from the player whose icon was clicked: YouTube keeps pages it
+// navigated away from in the DOM, hidden, so a channel page's #alerts comes before the
+// watch page's in the document
+function EnableVRVideo(ytPlayer) {
+    const videoElement = ytPlayer.querySelector('video');
     console.log(`enabling VR on ${videoElement}`);
 
     // remove the webgl viewer of the 360 video
-    const webgl = document.querySelector('.webgl');
+    const webgl = ytPlayer.querySelector('.webgl');
     if (webgl) {
         webgl.remove();
     }
-    const spherecontrol = document.querySelector('.ytp-webgl-spherical-control');
+    const spherecontrol = ytPlayer.querySelector('.ytp-webgl-spherical-control');
     if (spherecontrol) {
         spherecontrol.remove();
     }
@@ -149,11 +153,11 @@ function EnableVRVideo(videoElement) {
     player = new VRPlayer(videoElement, projection);
     detectStereo(player, projection);
 
-    const container = document.querySelector('.html5-video-container');
+    const container = ytPlayer.querySelector('.html5-video-container');
     container.appendChild(player.canvas);
 
     // clean alerts box and add VR button
-    const alertsbox = document.querySelector('#alerts');
+    const alertsbox = ytPlayer.closest('ytd-watch-flexy')?.querySelector('#alerts');
     if (alertsbox) {
         if (alertsbox.firstChild) {
             alertsbox.removeChild(alertsbox.firstChild);
