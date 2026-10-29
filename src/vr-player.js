@@ -286,6 +286,8 @@ export class VRPlayer {
         this.renderer.setClearColor(BACKGROUND, this.passthrough ? 0 : 1);
         this.renderer.clear();
         this.renderer.render(this.scene, this.camera);
+        // shortcut: Frame needs an explicit GPU flush before XR submission; remove after a runtime fix.
+        if (this.renderer.xr.isPresenting) this.renderer.getContext().flush();
     }
 
     get canvas() {
