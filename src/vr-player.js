@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { PROJECTION_LABELS } from './projections.js';
+import { DEPTH_STRENGTHS, DepthSource } from './depth.js';
+import { depthSupported, FLAT_PROJECTIONS, PROJECTION_LABELS } from './projections.js';
 import { VRControls } from './vr-controls.js';
 
 // Chrome exposes XRWebGLBinding.createProjectionLayer even when the session isn't granted
@@ -18,8 +19,9 @@ const LEFT_HALF = [0, 0, 0.5, 1],
 const TOP_HALF = [0, 0.5, 1, 0.5],
     BOTTOM_HALF = [0, 0, 1, 0.5];
 
-// Each projection builds its meshes. Stereo projections put one mesh on layer 1 (left eye)
-// and one on layer 2 (right eye); three.js renders those layers to the matching eye in VR.
+// Each projection builds its meshes from the video material (and the player, for the depth).
+// Stereo projections put one mesh on layer 1 (left eye) and one on layer 2 (right eye);
+// three.js renders those layers to the matching eye in VR.
 export const PROJECTIONS = {
     EAC: { build: (m) => [eacMesh(m)] },
     EAC_LR: { build: (m) => eacStereoMeshes(m) },
@@ -37,6 +39,7 @@ export const PROJECTIONS = {
         hemisphere: true,
     },
     FLAT: { build: (m) => [flatScreenMesh(m)] },
+    FLAT_AI: { build: (m, player) => [depthScreenMesh(m, player.depthSource(), player.depthStrength)] },
 };
 
 // Equirectangular sphere (or front hemisphere for 180°), centred on -Z where the viewer faces.
@@ -207,6 +210,45 @@ function flatScreenMesh(material) {
     return new THREE.Mesh(new THREE.PlaneGeometry(2 * aspect, 2), material);
 }
 
+// The flat screen made 3D: a finely divided plane whose vertices the depth map (0 far, 1 near)
+// pushes towards or away from the viewer, by up to half the strength (in metres) each way.
+// Both eyes look at the same mesh, so the depth shows as real parallax.
+const DEPTH_MESH_COLUMNS = 192;
+
+// depth: the DepthSource, which supplies both the depth map and the matching frames
+function depthScreenMesh(material, depth, strength) {
+    const video = material.map.image;
+    const aspect = video.videoWidth && video.videoHeight ? video.videoWidth / video.videoHeight : 16 / 9;
+    const geometry = new THREE.PlaneGeometry(
+        2 * aspect,
+        2,
+        DEPTH_MESH_COLUMNS,
+        Math.round(DEPTH_MESH_COLUMNS / aspect),
+    );
+    const shader = new THREE.ShaderMaterial({
+        uniforms: { mapped: depth.picture, depthMap: { value: depth.texture }, strength },
+        vertexShader: `
+            varying vec2 vUv;
+            uniform sampler2D depthMap;
+            uniform float strength;
+            void main() {
+                vUv = uv;
+                // the depth map's first row is the top of the picture
+                float depth = texture2D(depthMap, vec2(uv.x, 1. - uv.y)).r;
+                vec3 displaced = position + vec3(0., 0., (depth - .5) * strength);
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(displaced, 1.);
+            }`,
+        fragmentShader: `
+            varying vec2 vUv;
+            uniform sampler2D mapped;
+            void main() {
+                gl_FragColor = texture2D(mapped, vUv);
+                #include <colorspace_fragment>
+            }`,
+    });
+    return new THREE.Mesh(geometry, shader);
+}
+
 // Renders a <video> element into a WebXR session with a switchable projection
 export class VRPlayer {
     constructor(video, projection) {
@@ -239,6 +281,16 @@ export class VRPlayer {
                 this.arSupported = supported;
             })
             .catch(() => {});
+        // "Flat screen 3D (AI)" needs depth estimation on the GPU; it's offered once that's known
+        // to work. The depth source is made when first needed and kept, so switching back and
+        // forth doesn't reload the model.
+        this.depthSupported = false;
+        this.depth = null;
+        this.depthStrength = { value: DEPTH_STRENGTHS[1] }; // a uniform shared with the mesh
+        depthSupported().then((supported) => {
+            this.depthSupported = supported;
+            if (supported && this.select) this.select.add(projectionOption('FLAT_AI'));
+        });
         // the 360°/180° meshes, turned by "Recenter", and the flat screen, which can be grabbed
         this.world = new THREE.Group();
         this.screen = new THREE.Group();
@@ -328,9 +380,38 @@ export class VRPlayer {
         this.projection = name;
         if (this.select) this.select.value = name;
         this.disposeMeshes();
-        this.meshes = PROJECTIONS[name].build(this.material);
-        const parent = name === 'FLAT' ? this.screen : this.sphere;
+        this.meshes = PROJECTIONS[name].build(this.material, this);
+        const parent = this.isFlat ? this.screen : this.sphere;
         for (const mesh of this.meshes) parent.add(mesh);
+        // estimate depth only while it's shown
+        if (name === 'FLAT_AI') this.depthSource().start();
+        else this.depth?.stop();
+    }
+
+    // Whether the video is shown on the movable flat screen
+    get isFlat() {
+        return FLAT_PROJECTIONS.has(this.projection);
+    }
+
+    depthSource() {
+        this.depth ??= new DepthSource(this.video, this.material.map);
+        return this.depth;
+    }
+
+    // The next 3D strength level of "Flat screen 3D (AI)", wrapping around
+    // what's holding up the AI depth (downloading the model, starting, failed), if it's shown
+    get depthStatus() {
+        return this.projection === 'FLAT_AI' ? (this.depth?.status ?? '') : '';
+    }
+
+    cycleDepthStrength() {
+        const index = DEPTH_STRENGTHS.indexOf(this.depthStrength.value);
+        this.depthStrength.value = DEPTH_STRENGTHS[(index + 1) % DEPTH_STRENGTHS.length];
+    }
+
+    // The projections this browser can show, in dropdown order
+    get projectionIds() {
+        return PROJECTION_LABELS.map(([id]) => id).filter((id) => id !== 'FLAT_AI' || this.depthSupported);
     }
 
     // Puts the viewer the distance setting plus however far they stepped back behind the
@@ -405,13 +486,7 @@ export class VRPlayer {
         const select = document.createElement('select');
         select.id = 'VRProjectionSelect';
         select.title = 'Video projection';
-        for (const [value, label] of PROJECTION_LABELS) {
-            const option = document.createElement('option');
-            option.value = value;
-            option.textContent = label;
-            option.style.background = '#222';
-            select.appendChild(option);
-        }
+        for (const id of this.projectionIds) select.appendChild(projectionOption(id));
         select.value = this.projection;
         styleControl(select);
         select.onchange = () => this.setProjection(select.value);
@@ -438,11 +513,20 @@ export class VRPlayer {
         this.disposeMeshes();
         this.material.map.dispose();
         this.material.dispose();
+        this.depth?.dispose();
         this.renderer.xr.removeEventListener('sessionend', this.onSessionEnd);
         this.canvas.remove();
         if (this.controls) this.controls.remove();
         this.renderer.dispose();
     }
+}
+
+function projectionOption(id) {
+    const option = document.createElement('option');
+    option.value = id;
+    option.textContent = PROJECTION_LABELS.find(([value]) => value === id)[1];
+    option.style.background = '#222';
+    return option;
 }
 
 // Same look as three.js' VR button

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { DEPTH_STRENGTHS } from './depth.js';
 import { PROJECTION_LABELS } from './projections.js';
 import { DISTANCES } from './vr-player.js';
 
@@ -48,7 +49,8 @@ const BUTTON = 88;
 const BUTTON_GAP = 8;
 
 // The panel's layout with the optional buttons that apply right now (distance for 180°
-// projections, passthrough in AR sessions) before Recenter and Exit; the projection switcher
+// projections, 3D strength for the AI depth, passthrough in AR sessions) before Recenter
+// and Exit; the projection switcher
 // takes whatever room is left
 const layouts = new Map();
 function layoutAreas(extras) {
@@ -245,7 +247,7 @@ export class VRControls {
     targets() {
         const targets = [];
         if (this.panel.visible) targets.push(this.panel);
-        if (this.player.projection === 'FLAT') targets.push(this.player.screen);
+        if (this.player.isFlat) targets.push(this.player.screen);
         return targets;
     }
 
@@ -275,7 +277,7 @@ export class VRControls {
         this.panelBar.scale.setScalar(1 / panelScale);
         this.panelBar.position.set(0, -PANEL_HEIGHT / 2 - 0.04 / panelScale, 0.001);
 
-        const flat = this.player.projection === 'FLAT';
+        const flat = this.player.isFlat;
         this.screenBar.visible = flat;
         this.screenCorner.visible = flat;
         if (!flat) return;
@@ -355,6 +357,7 @@ export class VRControls {
     get areas() {
         const extras = [];
         if (this.player.isHemisphere) extras.push('distance');
+        if (this.player.projection === 'FLAT_AI') extras.push('depthStrength');
         if (this.player.passthroughAvailable) extras.push('passthrough');
         return layoutAreas(extras);
     }
@@ -441,7 +444,7 @@ export class VRControls {
                 break;
             case 'previousProjection':
             case 'nextProjection': {
-                const ids = PROJECTION_LABELS.map(([id]) => id);
+                const ids = this.player.projectionIds;
                 const step = area === 'nextProjection' ? 1 : -1;
                 const index = (ids.indexOf(this.player.projection) + step + ids.length) % ids.length;
                 this.player.setProjection(ids[index]);
@@ -452,6 +455,9 @@ export class VRControls {
                 break;
             case 'distance':
                 this.player.cycleDistance();
+                break;
+            case 'depthStrength':
+                this.player.cycleDepthStrength();
                 break;
             case 'recenter':
                 this.recenter();
@@ -576,6 +582,8 @@ export class VRControls {
             this.player.passthrough,
             this.player.passthroughAvailable,
             this.player.distance,
+            this.player.depthStrength.value,
+            this.player.depthStatus,
             [...hovered].join(),
             Math.floor(video.buffered.length ? video.buffered.end(video.buffered.length - 1) : 0),
         ].join('|');
@@ -724,7 +732,9 @@ export class VRControls {
 
         iconButton('previousProjection', () => text('‹', 0, -3, { size: 52, weight: 400 }));
         iconButton('nextProjection', () => text('›', 0, -3, { size: 52, weight: 400 }));
-        const label = PROJECTION_LABELS.find(([id]) => id === this.player.projection)?.[1] ?? '';
+        // while the AI depth downloads or starts, that instead of the name
+        const label =
+            this.player.depthStatus || (PROJECTION_LABELS.find(([id]) => id === this.player.projection)?.[1] ?? '');
         const labelX = (areas.previousProjection.x + areas.previousProjection.w + areas.nextProjection.x) / 2;
         text('PROJECTION', labelX, ROW_BOTTOM + 26, { size: 18, color: THEME.label, weight: 600, spacing: 2 });
         // smaller type when the name doesn't fit between the arrows
@@ -743,6 +753,21 @@ export class VRControls {
                     text('DISTANCE', 0, -12, { size: 15, weight: 700 });
                     for (let bar = 1; bar < DISTANCES.length; bar++) {
                         roundRect(-38 + bar * 16, 10, 12, 8, 2, bar <= level ? THEME.accent : THEME.track);
+                    }
+                },
+                { filled: true },
+            );
+        }
+
+        // 3D strength of the AI depth: "3D" over one to three bars
+        if (areas.depthStrength) {
+            const level = DEPTH_STRENGTHS.indexOf(this.player.depthStrength.value) + 1;
+            iconButton(
+                'depthStrength',
+                () => {
+                    text('3D', 0, -12, { size: 24, weight: 700 });
+                    for (let bar = 0; bar < DEPTH_STRENGTHS.length; bar++) {
+                        roundRect(-22 + bar * 16, 10, 12, 8, 2, bar < level ? THEME.accent : THEME.track);
                     }
                 },
                 { filled: true },

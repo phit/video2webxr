@@ -1,4 +1,4 @@
-import { DEFAULT_PROJECTION, PROJECTION_LABELS } from './projections.js';
+import { DEFAULT_PROJECTION, depthSupported, PROJECTION_LABELS } from './projections.js';
 
 // The extension's toolbar popup. Finds the largest video in the tab, injects generic.js into
 // its frame and sends it commands. The page gets no controls of its own.
@@ -88,8 +88,12 @@ async function stop() {
 }
 
 async function init() {
-    for (const [value, label] of PROJECTION_LABELS) projectionSelect.add(new Option(label, value));
+    const withDepth = await depthSupported();
+    for (const [value, label] of PROJECTION_LABELS) {
+        if (value !== 'FLAT_AI' || withDepth) projectionSelect.add(new Option(label, value));
+    }
     projectionSelect.value = localStorage.getItem('projection') || DEFAULT_PROJECTION;
+    if (!projectionSelect.value) projectionSelect.value = DEFAULT_PROJECTION; // remembered but unavailable
     projectionSelect.onchange = () => {
         localStorage.setItem('projection', projectionSelect.value);
         if (target && target.state !== 'none')

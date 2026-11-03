@@ -86,6 +86,7 @@ A controls panel floats below the video: play/pause, the seek bar, skip 10 secon
 | 180° | VR180 videos on YouTube, and other mono 180° videos |
 | 180° 3D side by side | 3D 180° videos with both eyes side by side, the most common VR video format |
 | Flat screen (other sites' default) | normal videos, shown on a virtual screen in front of you |
+| Flat screen 3D (AI) | normal videos turned 3D: an AI model estimates the depth of every frame and the screen takes its shape. Needs a GPU with WebGPU, so PC VR only for now; not on the Steam Frame yet, while Chrome there is still waiting on updates from Valve. The first time you pick it, the extension downloads the 50 MB model from Hugging Face once, for every site; nothing is sent there but the download request |
 
 You can switch the projection while in VR, from the panel. If the image looks jumbled into squares, try a 360° EAC option; if it looks stretched or doubled, try the others.
 
@@ -108,6 +109,7 @@ Sources are in `src/`:
 - `stereo.js`: tells 3D frames from mono ones
 - `generic.js`, `popup.*`: the toolbar button and its popup for other sites
 - `vr-player.js`: the shared WebXR player and projections
+- `depth.js`, `model.js`, `background.js`: depth for "Flat screen 3D (AI)"; the service worker downloads the model
 - `vr-controls.js`: the in-VR panel, lasers, moving and resizing
 - `projections.js`: the projection names, shared by the player and the popup
 
@@ -127,3 +129,4 @@ Bump `version` in `manifest.json` and `package.json`, commit (`chore: release 2.
 - Based on [EnableYoutubePCVR](https://github.com/feedthedogs/EnableYoutubePCVR) by feedthedogs (ISC)
 - Cardboard icon from [Tabler Icons](https://tabler.io/icons) (MIT)
 - Rendering by [three.js](https://threejs.org/) (MIT)
+- Depth for "Flat screen 3D (AI)" by [Depth Anything V2 Small](https://huggingface.co/depth-anything/Depth-Anything-V2-Small) (Apache 2.0), in the [ONNX conversion by onnx-community](https://huggingface.co/onnx-community/depth-anything-v2-small) (downloaded from Hugging Face on first use, not bundled), run with [ONNX Runtime Web](https://onnxruntime.ai/) (MIT)
