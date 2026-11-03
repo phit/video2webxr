@@ -1,9 +1,34 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <!-- Cardboard viewer outline from Tabler Icons (MIT, see icons/tabler-icons.LICENSE) on a rounded tile -->
-  <rect width="128" height="128" rx="28" fill="#1a73e8"/>
-  <g transform="translate(16 16) scale(4)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M3 8v8.5a2.5 2.5 0 0 0 2.5 2.5h1.06a3 3 0 0 0 2.34 -1.13l1.54 -1.92a2 2 0 0 1 3.12 0l1.54 1.92a3 3 0 0 0 2.34 1.13h1.06a2.5 2.5 0 0 0 2.5 -2.5v-8.5a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2" />
-    <path d="M7 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
-    <path d="M15 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+  <!-- Two 16:9 video screens crossing in an X, seen at an angle. Each is drawn flat (x 12..116,
+       y 35..93) and skewed so it recedes on one side; the receding halves are darker and drawn
+       first, so the near halves overlap them. The grey screen shows a landscape over a seek bar, the red one a
+       VR headset. -->
+  <defs>
+    <clipPath id="left"><rect x="0" y="0" width="64" height="128"/></clipPath>
+    <clipPath id="right"><rect x="64" y="0" width="64" height="128"/></clipPath>
+    <rect id="screen" x="12" y="35" width="104" height="58" rx="9"/>
+  </defs>
+  <!-- far halves -->
+  <g transform="matrix(1 .34 0 1 0 -21.76)" clip-path="url(#left)">
+    <use href="#screen" fill="#485565"/>
+  </g>
+  <g transform="matrix(1 -.34 0 1 0 21.76)" clip-path="url(#right)">
+    <use href="#screen" fill="#7a1b21"/>
+  </g>
+  <!-- near halves: the video with its seek bar, and the headset -->
+  <g transform="matrix(1 .34 0 1 0 -21.76)" clip-path="url(#right)">
+    <use href="#screen" fill="#6c7882"/>
+    <path d="M70 72l12-14 7 8 5-5 13 11z" fill="#9eacbb"/>
+    <circle cx="99" cy="48" r="4" fill="#9eacbb"/>
+    <rect x="72" y="78" width="36" height="5" rx="2.5" fill="#485565"/>
+    <rect x="72" y="78" width="18" height="5" rx="2.5" fill="#fff"/>
+    <circle cx="90" cy="80.5" r="5.5" fill="#fff"/>
+  </g>
+  <g transform="matrix(1 -.34 0 1 0 21.76)" clip-path="url(#left)">
+    <use href="#screen" fill="#af282f"/>
+    <!-- headset: a rounded visor with a curved nose cut-out and two round lenses -->
+    <path d="M30 54h20a10.5 10.5 0 0 1 0 21h-4a6 6 0 0 0-12 0h-4a10.5 10.5 0 0 1 0-21z" fill="#fff"/>
+    <circle cx="30.5" cy="64.5" r="5" fill="#7a1b21"/>
+    <circle cx="49.5" cy="64.5" r="5" fill="#7a1b21"/>
   </g>
 </svg>
