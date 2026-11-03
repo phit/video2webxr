@@ -48,7 +48,7 @@ The page itself gets no extra controls, so video lightboxes and overlays keep wo
 
 **In VR**
 
-A controls panel floats below the video: play/pause, the seek bar, skip 10 seconds back or forward, mute and volume, the projection (‹ › to switch), passthrough, Recenter and Exit VR.
+A controls panel floats below the video: play/pause, the seek bar, skip 10 seconds back or forward, mute and volume, the projection (‹ › to switch), distance for 180° videos, passthrough, Recenter and Exit VR.
 
 ![The controls panel below a flat screen video in the headset, with passthrough showing the room around it](docs/screenshots/headset-controls-passthrough.jpg)
 
@@ -61,6 +61,7 @@ A controls panel floats below the video: play/pause, the seek bar, skip 10 secon
 | Resize the flat screen | Drag its bottom right corner, or push the thumbstick left or right while holding it |
 | Play or pause | Click the flat screen |
 | Skip 10 seconds back or forward | Double click the left or right third of the flat screen, like on YouTube's mobile app; each further click skips another 10 seconds |
+| Sit further back from a 180° video | Step backwards: the video stays where it is, as if it were a dome about 6 m across, so close-ups feel less in your face. Or press DISTANCE on the panel to step through three levels without moving (remembered per site). Recenter makes your current spot the centre again |
 | See the room around the screen | Press the passthrough button (the headset icon). It works where the browser supports AR with passthrough, e.g. Chrome Canary on the Steam Frame ([install guide](https://github.com/phit/chromium-webxr-steam-frame/tree/google#install-on-the-frame)), and only shows there |
 | Put everything back in front of you | Recenter on the panel. On 360° and 180° videos it also turns the front of the video to where you look |
 

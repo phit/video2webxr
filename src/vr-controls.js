@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { PROJECTION_LABELS } from './projections.js';
+import { DISTANCES } from './vr-player.js';
 
 // In-VR controls: a laser from each controller, a panel with the video's controls, and
 // moving things around like in the Steam Frame's UI. Point the laser and pull the trigger to
@@ -34,7 +35,7 @@ const AXIS_STICK_Y = 3;
 const ROW_TOP = 24;
 const ROW_BOTTOM = 140;
 const ROW_HEIGHT = 92;
-const AREAS_WITH_PASSTHROUGH = {
+const FIXED_AREAS = {
     seek: { x: 150, y: ROW_TOP + 28, w: 980, h: 36 },
     back: { x: 16, y: ROW_BOTTOM, w: 88, h: ROW_HEIGHT },
     play: { x: 112, y: ROW_BOTTOM, w: 88, h: ROW_HEIGHT },
@@ -42,17 +43,29 @@ const AREAS_WITH_PASSTHROUGH = {
     mute: { x: 328, y: ROW_BOTTOM, w: 88, h: ROW_HEIGHT },
     volume: { x: 428, y: ROW_BOTTOM + 28, w: 172, h: 36 },
     previousProjection: { x: 616, y: ROW_BOTTOM, w: 56, h: ROW_HEIGHT },
-    nextProjection: { x: 912, y: ROW_BOTTOM, w: 56, h: ROW_HEIGHT },
-    passthrough: { x: 984, y: ROW_BOTTOM, w: 88, h: ROW_HEIGHT },
-    recenter: { x: 1080, y: ROW_BOTTOM, w: 88, h: ROW_HEIGHT },
-    exit: { x: 1176, y: ROW_BOTTOM, w: 88, h: ROW_HEIGHT },
 };
-// Without passthrough (no AR session) the projection switcher takes the button's place
-const { passthrough: _, ...withoutPassthrough } = AREAS_WITH_PASSTHROUGH;
-const AREAS_WITHOUT_PASSTHROUGH = {
-    ...withoutPassthrough,
-    nextProjection: { x: 1004, y: ROW_BOTTOM, w: 56, h: ROW_HEIGHT },
-};
+const BUTTON = 88;
+const BUTTON_GAP = 8;
+
+// The panel's layout with the optional buttons that apply right now (distance for 180°
+// projections, passthrough in AR sessions) before Recenter and Exit; the projection switcher
+// takes whatever room is left
+const layouts = new Map();
+function layoutAreas(extras) {
+    const key = extras.join();
+    if (!layouts.has(key)) {
+        const areas = { ...FIXED_AREAS };
+        const buttons = [...extras, 'recenter', 'exit'];
+        let x = CANVAS_W - 16 - buttons.length * BUTTON - (buttons.length - 1) * BUTTON_GAP;
+        areas.nextProjection = { x: x - 72, y: ROW_BOTTOM, w: 56, h: ROW_HEIGHT };
+        for (const name of buttons) {
+            areas[name] = { x, y: ROW_BOTTOM, w: BUTTON, h: ROW_HEIGHT };
+            x += BUTTON + BUTTON_GAP;
+        }
+        layouts.set(key, areas);
+    }
+    return layouts.get(key);
+}
 const SLIDERS = new Set(['seek', 'volume']);
 
 // Steam Deck / Steam Frame colours
@@ -340,7 +353,10 @@ export class VRControls {
 
     // The panel's layout; the passthrough button only shows in sessions that can do it
     get areas() {
-        return this.player.passthroughAvailable ? AREAS_WITH_PASSTHROUGH : AREAS_WITHOUT_PASSTHROUGH;
+        const extras = [];
+        if (this.player.isHemisphere) extras.push('distance');
+        if (this.player.passthroughAvailable) extras.push('passthrough');
+        return layoutAreas(extras);
     }
 
     areaAt(point) {
@@ -433,6 +449,9 @@ export class VRControls {
             }
             case 'passthrough':
                 if (this.player.passthroughAvailable) this.player.setPassthrough(!this.player.passthrough);
+                break;
+            case 'distance':
+                this.player.cycleDistance();
                 break;
             case 'recenter':
                 this.recenter();
@@ -556,6 +575,7 @@ export class VRControls {
             this.player.projection,
             this.player.passthrough,
             this.player.passthroughAvailable,
+            this.player.distance,
             [...hovered].join(),
             Math.floor(video.buffered.length ? video.buffered.end(video.buffered.length - 1) : 0),
         ].join('|');
@@ -707,7 +727,27 @@ export class VRControls {
         const label = PROJECTION_LABELS.find(([id]) => id === this.player.projection)?.[1] ?? '';
         const labelX = (areas.previousProjection.x + areas.previousProjection.w + areas.nextProjection.x) / 2;
         text('PROJECTION', labelX, ROW_BOTTOM + 26, { size: 18, color: THEME.label, weight: 600, spacing: 2 });
-        text(label, labelX, ROW_BOTTOM + 60, { size: 24 });
+        // smaller type when the name doesn't fit between the arrows
+        const labelRoom = areas.nextProjection.x - (areas.previousProjection.x + areas.previousProjection.w) - 8;
+        c.font = `500 24px ${THEME.font}`;
+        const labelSize = Math.max(16, Math.min(24, Math.floor((24 * labelRoom) / c.measureText(label).width)));
+        text(label, labelX, ROW_BOTTOM + 60, { size: labelSize });
+
+        // how far back from a 180° video you sit: "DISTANCE" over a bar per step (none lit: in
+        // the centre)
+        if (areas.distance) {
+            const level = DISTANCES.indexOf(this.player.distance);
+            iconButton(
+                'distance',
+                () => {
+                    text('DISTANCE', 0, -12, { size: 15, weight: 700 });
+                    for (let bar = 1; bar < DISTANCES.length; bar++) {
+                        roundRect(-38 + bar * 16, 10, 12, 8, 2, bar <= level ? THEME.accent : THEME.track);
+                    }
+                },
+                { filled: true },
+            );
+        }
 
         // passthrough, only in sessions that can show the room: a headset with the room's
         // horizon showing through its visor

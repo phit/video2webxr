@@ -31,9 +31,10 @@ export const PROJECTIONS = {
     '360_LR': {
         build: (m) => [sphereMesh(m, false, LEFT_HALF, 1), sphereMesh(m, false, RIGHT_HALF, 2)],
     },
-    180: { build: (m) => [sphereMesh(m, true, FULL_FRAME)] },
+    180: { build: (m) => [sphereMesh(m, true, FULL_FRAME)], hemisphere: true },
     '180_LR': {
         build: (m) => [sphereMesh(m, true, LEFT_HALF, 1), sphereMesh(m, true, RIGHT_HALF, 2)],
+        hemisphere: true,
     },
     FLAT: { build: (m) => [flatScreenMesh(m)] },
 };
@@ -41,6 +42,7 @@ export const PROJECTIONS = {
 // Equirectangular sphere (or front hemisphere for 180°), centred on -Z where the viewer faces.
 // The vertical field of view follows the eye's aspect ratio (same angle per pixel both ways),
 // e.g. YouTube serves VR180 as 4:3 frames covering 180° x 135°.
+const SPHERE_RADIUS = 500;
 function sphereMesh(material, halfSphere, [offsetU, offsetV, scaleU, scaleV], layer) {
     const horizontalFov = halfSphere ? Math.PI : Math.PI * 2;
     const video = material.map.image;
@@ -50,7 +52,7 @@ function sphereMesh(material, halfSphere, [offsetU, offsetV, scaleU, scaleV], la
             : horizontalFov / Math.PI;
     const verticalFov = Math.min(Math.PI, horizontalFov / eyeAspect);
     const geometry = new THREE.SphereGeometry(
-        500,
+        SPHERE_RADIUS,
         60,
         40,
         halfSphere ? Math.PI : Math.PI / 2,
@@ -180,6 +182,21 @@ function eacStereoMeshes(material) {
     ];
 }
 
+// How far behind the centre of a 180° video the viewer sits, as a fraction of the sphere's
+// radius. The hemisphere then becomes a big curved screen in front of you instead of
+// wrapping around you: at these steps it spans about 150°, 127° and 103°, so close-ups feel
+// less in your face, at the cost of some stretching towards the edges. Only a sizeable
+// fraction of the radius makes a difference, which is why this isn't just a step back.
+export const DISTANCES = [0, 0.25, 0.5, 0.8];
+const DISTANCE_KEY = 'video2webxr-distance';
+// Physically stepping back from where you recentered moves you back too, as if the hemisphere
+// were a dome of this radius (metres): the real 500m sphere would hardly change, and a small
+// sphere would make 3D videos feel closer, since the eyes would converge on its surface.
+// Only backwards along the recentered forward direction counts, so swaying and leaning don't
+// shift the picture.
+const WALK_RADIUS = 3;
+const MAX_DISTANCE = 1.5; // in radii, keeps the far side within the camera's far plane
+
 // A 2m tall screen, for videos that are only available flat. VRPlayer puts it in its movable
 // screen group, 3m in front of the viewer to start with.
 const SCREEN_DISTANCE = 3;
@@ -227,6 +244,18 @@ export class VRPlayer {
         this.screen = new THREE.Group();
         this.placeScreen(new THREE.Vector3(), 0);
         this.scene.add(this.world, this.screen);
+        // the sphere meshes, moved forward by the distance setting so the viewer ends up
+        // behind the centre; remembered per site, since the page's storage is all a content
+        // script has
+        this.sphere = new THREE.Group();
+        this.world.add(this.sphere);
+        this.headPosition = new THREE.Vector3();
+        try {
+            const distance = Number(localStorage.getItem(DISTANCE_KEY));
+            this.distance = DISTANCES.includes(distance) ? distance : 0;
+        } catch {
+            this.distance = 0; // storage blocked
+        }
         this.setProjection(projection);
         // the geometry depends on the video's aspect ratio, which can change with quality switches
         this.onVideoResize = () => this.setProjection(this.projection);
@@ -245,6 +274,7 @@ export class VRPlayer {
         this.renderer.setAnimationLoop((timestamp) => {
             this.timer.update(timestamp);
             this.vrControls.update(this.timer.getDelta());
+            this.placeSphere();
             this.render();
         });
         this.onSessionEnd = () => this.setPassthrough(false);
@@ -299,8 +329,34 @@ export class VRPlayer {
         if (this.select) this.select.value = name;
         this.disposeMeshes();
         this.meshes = PROJECTIONS[name].build(this.material);
-        const parent = name === 'FLAT' ? this.screen : this.world;
+        const parent = name === 'FLAT' ? this.screen : this.sphere;
         for (const mesh of this.meshes) parent.add(mesh);
+    }
+
+    // Puts the viewer the distance setting plus however far they stepped back behind the
+    // centre of a 180° video (see WALK_RADIUS); called every frame
+    placeSphere() {
+        let back = 0;
+        if (this.isHemisphere && this.renderer.xr.isPresenting) {
+            this.renderer.xr.getCamera().getWorldPosition(this.headPosition);
+            back = Math.max(0, this.world.worldToLocal(this.headPosition).z);
+        }
+        const distance = this.isHemisphere ? Math.min(MAX_DISTANCE, this.distance + back / WALK_RADIUS) : 0;
+        this.sphere.position.z = back - distance * SPHERE_RADIUS;
+    }
+
+    // Whether the projection is a 180° one, which the distance setting applies to
+    get isHemisphere() {
+        return !!PROJECTIONS[this.projection].hemisphere;
+    }
+
+    cycleDistance() {
+        this.distance = DISTANCES[(DISTANCES.indexOf(this.distance) + 1) % DISTANCES.length];
+        try {
+            localStorage.setItem(DISTANCE_KEY, this.distance);
+        } catch {
+            // only kept for this video
+        }
     }
 
     // Puts the flat screen in front of a viewer at position, looking towards yaw
