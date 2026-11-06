@@ -19,7 +19,7 @@ A Chromium extension that plays web videos in your PC VR headset through WebXR, 
 2. Open the extensions page in the browser and enable developer mode
 3. Click "Load Unpacked" and choose the folder
 
-**On the Steam Frame:** works in Chromium or Chrome 157 or newer running on the Frame itself, from Steam Frame OS 0.5.7, with no flags or setup. Install Chromium from Discover once Flathub has version 157 (it's still on 156 in early November 2026); until then, [phit/chromium-webxr-steam-frame (google branch)](https://github.com/phit/chromium-webxr-steam-frame/tree/google) installs Google's Chrome 157 and adds it to your Steam library
+**On the Steam Frame:** works in Chromium 157 or newer running on the Frame itself, from Steam Frame OS 0.5.7, with no flags or setup: install Chromium from Discover, then install the extension from the Chrome Web Store
 
 ### Usage
 1. Turn VR on first (e.g. start SteamVR)
