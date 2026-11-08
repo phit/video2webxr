@@ -9,6 +9,8 @@ export const PROJECTION_LABELS = [
     ['180', '180°'],
     ['180_LR', '180° 3D side by side'],
     ['FLAT', 'Flat screen'],
+    ['FLAT_LR', 'Flat screen 3D side by side'],
+    ['FLAT_TB', 'Flat screen 3D top/bottom'],
     // only offered where depth estimation runs, see depthSupported()
     ['FLAT_AI', 'Flat screen 3D (AI)'],
 ];
@@ -30,7 +32,7 @@ export async function depthSupported() {
 }
 
 // Projections that are shown on the movable flat screen
-export const FLAT_PROJECTIONS = new Set(['FLAT', 'FLAT_AI']);
+export const FLAT_PROJECTIONS = new Set(['FLAT', 'FLAT_LR', 'FLAT_TB', 'FLAT_AI']);
 
 // What Chrome reports when SteamVR refuses the session, usually because another browser or app
 // already holds the headset

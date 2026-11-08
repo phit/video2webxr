@@ -30,8 +30,10 @@ function correlation(a, b) {
 }
 
 // How alike the two halves of the current frame are, split 'LR' (left/right) or 'TB'
-// (top/bottom); null if the frame can't be read or is too plain to tell
-export function halvesCorrelation(video, split) {
+// (top/bottom); null if the frame can't be read or is too plain to tell. With maxShift, the
+// halves are also compared shifted sideways by up to that fraction of an eye's width, and the
+// best match counts: flat 3D videos have more parallax between the eyes than 360° ones.
+export function halvesCorrelation(video, split, maxShift = 0) {
     if (video.readyState < video.HAVE_CURRENT_DATA) return null;
     const canvas = document.createElement('canvas');
     canvas.width = SIZE;
@@ -44,20 +46,30 @@ export function halvesCorrelation(video, split) {
     } catch {
         return null; // not readable (CORS)
     }
-    const half = SIZE / 2;
-    const a = new Float32Array(half * SIZE);
-    const b = new Float32Array(half * SIZE);
-    let i = 0;
-    for (let y = 0; y < (split === 'LR' ? SIZE : half); y++) {
-        for (let x = 0; x < (split === 'LR' ? half : SIZE); x++) {
-            const other = split === 'LR' ? (y * SIZE + x + half) * 4 : ((y + half) * SIZE + x) * 4;
-            const own = (y * SIZE + x) * 4;
-            a[i] = pixels[own] * 0.3 + pixels[own + 1] * 0.59 + pixels[own + 2] * 0.11;
-            b[i] = pixels[other] * 0.3 + pixels[other + 1] * 0.59 + pixels[other + 2] * 0.11;
-            i++;
+    const luma = (p) => pixels[p] * 0.3 + pixels[p + 1] * 0.59 + pixels[p + 2] * 0.11;
+    // each eye's size in the scaled frame, and where the second eye starts
+    const width = split === 'LR' ? SIZE / 2 : SIZE;
+    const height = split === 'LR' ? SIZE : SIZE / 2;
+    const second = split === 'LR' ? SIZE / 2 : (SIZE / 2) * SIZE;
+    const shift = Math.round(maxShift * width);
+    // the same pixels of both eyes, the second shifted by s, leaving out the shift at each side
+    let best = null;
+    const columns = width - 2 * shift;
+    for (let s = -shift; s <= shift; s++) {
+        const a = new Float32Array(columns * height);
+        const b = new Float32Array(columns * height);
+        let i = 0;
+        for (let y = 0; y < height; y++) {
+            for (let x = shift; x < width - shift; x++) {
+                a[i] = luma((y * SIZE + x) * 4);
+                b[i] = luma((y * SIZE + x + s + second) * 4);
+                i++;
+            }
         }
+        const c = correlation(a, b);
+        if (c !== null && (best === null || c > best)) best = c;
     }
-    return correlation(a, b);
+    return best;
 }
 
 // Above this the halves are taken to be the two eyes of one picture

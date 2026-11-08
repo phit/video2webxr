@@ -39,6 +39,8 @@ export const PROJECTIONS = {
         hemisphere: true,
     },
     FLAT: { build: (m) => [flatScreenMesh(m)] },
+    FLAT_LR: { build: (m) => flatStereoMeshes(m, 'LR') },
+    FLAT_TB: { build: (m) => flatStereoMeshes(m, 'TB') },
     FLAT_AI: { build: (m, player) => [depthScreenMesh(m, player.depthSource(), player.depthStrength)] },
 };
 
@@ -208,6 +210,32 @@ function flatScreenMesh(material) {
     const video = material.map.image;
     const aspect = video.videoWidth && video.videoHeight ? video.videoWidth / video.videoHeight : 16 / 9;
     return new THREE.Mesh(new THREE.PlaneGeometry(2 * aspect, 2), material);
+}
+
+// The flat screen in 3D, from a frame with the two eyes side by side ('LR') or above each other
+// ('TB', left eye on top): one plane per eye, in the same place. Most of these videos are "half"
+// side by side or top/bottom, each eye squeezed to half the width or height of a normal 16:9
+// frame, so the screen keeps the frame's shape. A frame twice as wide (32:9) or twice as tall
+// (16:18) as usual holds two full-size pictures, so the screen gets one eye's shape.
+const FULL_SBS_ASPECT = 3;
+const FULL_TB_ASPECT = 1.2;
+function flatStereoMeshes(material, split) {
+    const video = material.map.image;
+    const frameAspect = video.videoWidth && video.videoHeight ? video.videoWidth / video.videoHeight : 16 / 9;
+    let aspect = frameAspect;
+    if (split === 'LR' && frameAspect >= FULL_SBS_ASPECT) aspect = frameAspect / 2;
+    if (split === 'TB' && frameAspect <= FULL_TB_ASPECT) aspect = frameAspect * 2;
+    const halves = split === 'LR' ? [LEFT_HALF, RIGHT_HALF] : [TOP_HALF, BOTTOM_HALF];
+    return halves.map(([offsetU, offsetV, scaleU, scaleV], eye) => {
+        const geometry = new THREE.PlaneGeometry(2 * aspect, 2);
+        const uv = geometry.attributes.uv;
+        for (let i = 0; i < uv.count; i++) {
+            uv.setXY(i, offsetU + uv.getX(i) * scaleU, offsetV + uv.getY(i) * scaleV);
+        }
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.layers.set(eye + 1);
+        return mesh;
+    });
 }
 
 // The flat screen made 3D: a finely divided plane whose vertices the depth map (0 far, 1 near)

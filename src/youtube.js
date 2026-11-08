@@ -87,7 +87,10 @@ function detectProjection() {
 }
 
 // YouTube doesn't say whether a video is 3D, so look at the frame: the two eyes' views sit
-// side by side (or above each other) and look nearly the same
+// side by side (or above each other) and look nearly the same. Each entry: the split, the 3D
+// projection, and for flat videos how far the halves may be shifted sideways to match, as a
+// fraction of an eye's width, since the eyes' views differ more there
+const FLAT_SHIFT = 0.1;
 const STEREO_VARIANTS = {
     EAC: [['LR', 'EAC_LR']],
     360: [
@@ -95,7 +98,17 @@ const STEREO_VARIANTS = {
         ['LR', '360_LR'],
     ],
     180: [['LR', '180_LR']],
+    FLAT: [
+        ['LR', 'FLAT_LR', FLAT_SHIFT],
+        ['TB', 'FLAT_TB', FLAT_SHIFT],
+    ],
 };
+// Frames that must agree before the projection is settled. Most flat videos are mono, and a
+// symmetric shot could pass for 3D, so they need one more.
+const VOTES_NEEDED = { FLAT: 3 };
+// Flat 3D halves match less well even with the shift (squeezed to half height, older footage);
+// mono flat videos score below 0.5 even so
+const THRESHOLDS = { FLAT: 0.7 };
 
 const STEREO_CHECK_MS = 200; // a check scales one frame down to 64x64, so it's cheap
 const STEREO_MAX_CHECKS = 60000 / STEREO_CHECK_MS;
@@ -108,20 +121,23 @@ function detectStereo(vrPlayer, mono, votes = {}, attempt = 0) {
     if (!variants || player !== vrPlayer || vrPlayer.projection !== mono) return;
     const adShowing = document.querySelector('#movie_player')?.classList.contains('ad-showing');
     if (!adShowing) {
+        // the layout whose halves match best, if it's close enough; one layout's eyes can look
+        // somewhat alike split the other way too
         let vote = null;
-        for (const [split, stereo] of variants) {
-            const similarity = halvesCorrelation(vrPlayer.video, split);
+        let best = -1;
+        for (const [split, stereo, shift] of variants) {
+            const similarity = halvesCorrelation(vrPlayer.video, split, shift);
             if (similarity === null) continue;
             console.log(`video2webxr: ${split} halves correlation ${similarity.toFixed(2)}`);
-            if (similarity > STEREO_THRESHOLD) {
-                vote = stereo;
-                break;
-            }
             vote ??= mono;
+            if (similarity > (THRESHOLDS[mono] ?? STEREO_THRESHOLD) && similarity > best) {
+                vote = stereo;
+                best = similarity;
+            }
         }
         if (vote) {
             votes[vote] = (votes[vote] || 0) + 1;
-            if (votes[vote] === 2) {
+            if (votes[vote] === (VOTES_NEEDED[mono] ?? 2)) {
                 vrPlayer.setProjection(vote);
                 return;
             }

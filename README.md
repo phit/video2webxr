@@ -86,6 +86,7 @@ A controls panel floats below the video: play/pause, the seek bar, skip 10 secon
 | 180° | VR180 videos on YouTube, and other mono 180° videos |
 | 180° 3D side by side | 3D 180° videos with both eyes side by side, the most common VR video format |
 | Flat screen (other sites' default) | normal videos, shown on a virtual screen in front of you |
+| Flat screen 3D side by side, top/bottom | 3D movies and clips with both eyes side by side or above each other, on the same virtual screen. Works for both half size (a normal 16:9 frame) and full size (32:9 or 16:18); on YouTube it's picked automatically |
 | Flat screen 3D (AI) | normal videos turned 3D: an AI model estimates the depth of every frame and the screen takes its shape. Needs a GPU with WebGPU, so PC VR only for now; not on the Steam Frame yet, while Chrome there is still waiting on updates from Valve. The first time you pick it, the extension downloads the 50 MB model from Hugging Face once, for every site; nothing is sent there but the download request |
 
 You can switch the projection while in VR, from the panel. If the image looks jumbled into squares, try a 360° EAC option; if it looks stretched or doubled, try the others.
