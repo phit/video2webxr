@@ -32,5 +32,13 @@ export async function depthSupported() {
 // Projections that are shown on the movable flat screen
 export const FLAT_PROJECTIONS = new Set(['FLAT', 'FLAT_AI']);
 
+// What Chrome reports when SteamVR refuses the session, usually because another browser or app
+// already holds the headset
+export function enterVRError(e) {
+    return e.name === 'NotSupportedError'
+        ? "The VR runtime couldn't start a session. Another browser or app may be using the headset: close it, or restart SteamVR, and try again."
+        : `Entering VR failed: ${e.message}`;
+}
+
 // Most videos on the web are plain flat videos
 export const DEFAULT_PROJECTION = 'FLAT';

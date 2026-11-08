@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { DEPTH_STRENGTHS, DepthSource } from './depth.js';
-import { depthSupported, FLAT_PROJECTIONS, PROJECTION_LABELS } from './projections.js';
+import { depthSupported, enterVRError, FLAT_PROJECTIONS, PROJECTION_LABELS } from './projections.js';
 import { VRControls } from './vr-controls.js';
 
 // Chrome exposes XRWebGLBinding.createProjectionLayer even when the session isn't granted
@@ -353,6 +353,25 @@ export class VRPlayer {
         return session;
     }
 
+    // enterVR() for the in-page controls: why it failed goes to lastError and the line below the
+    // Enter VR button. Resolves to whether VR started.
+    startSession() {
+        this.lastError = null;
+        if (this.errorLine) this.errorLine.hidden = true;
+        return this.enterVR().then(
+            () => true,
+            (e) => {
+                console.warn('video2webxr: entering VR failed:', e);
+                this.lastError = enterVRError(e);
+                if (this.errorLine) {
+                    this.errorLine.textContent = this.lastError;
+                    this.errorLine.hidden = false;
+                }
+                return false;
+            },
+        );
+    }
+
     // Whether the current session can show the room around the video
     get passthroughAvailable() {
         return this.renderer.xr.isPresenting && this.renderer.xr.getEnvironmentBlendMode() === 'alpha-blend';
@@ -449,10 +468,25 @@ export class VRPlayer {
     }
 
     // The Enter VR button and projection dropdown side by side, plus any extra buttons
+    // (YouTube only), with a line below for why entering VR failed
     createControls(...extraButtons) {
         this.controls = document.createElement('div');
-        Object.assign(this.controls.style, { display: 'flex', justifyContent: 'center', gap: '8px' });
-        this.controls.append(this.createVRButton(), this.createProjectionSelect(), ...extraButtons);
+        const row = document.createElement('div');
+        Object.assign(row.style, { display: 'flex', justifyContent: 'center', gap: '8px' });
+        this.errorLine = document.createElement('div');
+        this.errorLine.hidden = true;
+        Object.assign(this.errorLine.style, {
+            margin: '8px auto 0',
+            maxWidth: '640px',
+            padding: '8px 12px',
+            borderRadius: '12px',
+            background: CONTROL_BACKGROUND,
+            color: CONTROL_TEXT,
+            textAlign: 'center',
+            font: '13px/1.4 Roboto, Arial, sans-serif',
+        });
+        row.append(this.createVRButton(), this.createProjectionSelect(), ...extraButtons);
+        this.controls.append(row, this.errorLine);
         return this.controls;
     }
 
@@ -460,18 +494,24 @@ export class VRPlayer {
     createVRButton() {
         const button = document.createElement('button');
         styleControl(button);
-        button.style.width = '100px';
+        button.style.minWidth = '110px';
         button.textContent = 'ENTER VR';
         button.disabled = true;
         const supported = (mode) => navigator.xr?.isSessionSupported(mode).catch(() => false) ?? false;
         Promise.all([supported('immersive-vr'), supported('immersive-ar')]).then(([vr, ar]) => {
             button.disabled = !vr && !ar;
-            if (button.disabled) button.textContent = 'VR NOT SUPPORTED';
+            if (button.disabled) {
+                button.textContent = 'VR NOT SUPPORTED';
+                button.style.cursor = 'default';
+            }
         });
         button.onclick = () => {
             const session = this.renderer.xr.getSession();
-            if (session) session.end();
-            else this.enterVR().catch((e) => console.warn('video2webxr: entering VR failed:', e));
+            if (session) {
+                session.end();
+                return;
+            }
+            this.startSession();
         };
         this.renderer.xr.addEventListener('sessionstart', () => {
             button.textContent = 'EXIT VR';
@@ -489,6 +529,14 @@ export class VRPlayer {
         for (const id of this.projectionIds) select.appendChild(projectionOption(id));
         select.value = this.projection;
         styleControl(select);
+        // its own arrow, clear of the rounded end, instead of the browser's at the very edge
+        Object.assign(select.style, {
+            appearance: 'none',
+            paddingRight: '36px',
+            backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(SELECT_ARROW)}")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 14px center',
+        });
         select.onchange = () => this.setProjection(select.value);
         this.select = select;
         return select;
@@ -525,27 +573,33 @@ function projectionOption(id) {
     const option = document.createElement('option');
     option.value = id;
     option.textContent = PROJECTION_LABELS.find(([value]) => value === id)[1];
-    option.style.background = '#222';
+    // the open dropdown list
+    Object.assign(option.style, { background: CONTROL_BACKGROUND, color: CONTROL_TEXT });
     return option;
 }
 
-// Same look as three.js' VR button
-export function styleControl(element) {
+// Shaped like YouTube's chip buttons, in fixed colours that read on both its light and dark
+// theme: YouTube's dark-theme chip grey, like its black Subscribe button in the light theme.
+// (YouTube's own theme variables aren't reachable from here.)
+const CONTROL_BACKGROUND = '#272727';
+const CONTROL_HOVER = '#3f3f3f';
+const CONTROL_TEXT = '#f1f1f1';
+const SELECT_ARROW = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path d="M1 1.5l5 5 5-5" fill="none" stroke="${CONTROL_TEXT}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+function styleControl(element) {
     Object.assign(element.style, {
-        padding: '12px 6px',
-        border: '1px solid #fff',
-        borderRadius: '4px',
-        background: 'rgba(0,0,0,0.1)',
-        color: '#fff',
-        font: 'normal 13px sans-serif',
-        opacity: '0.5',
-        outline: 'none',
+        height: '36px',
+        padding: '0 16px',
+        border: 'none',
+        borderRadius: '18px',
+        backgroundColor: CONTROL_BACKGROUND,
+        color: CONTROL_TEXT,
+        font: '500 14px Roboto, Arial, sans-serif',
         cursor: 'pointer',
     });
     element.onmouseenter = () => {
-        element.style.opacity = '1.0';
+        if (!element.disabled) element.style.backgroundColor = CONTROL_HOVER;
     };
     element.onmouseleave = () => {
-        element.style.opacity = '0.5';
+        element.style.backgroundColor = CONTROL_BACKGROUND;
     };
 }
