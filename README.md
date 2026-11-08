@@ -101,7 +101,11 @@ You can switch the projection while in VR, from the panel. If the image looks ju
 ### Troubleshooting
 If "Enter VR" says "VR NOT SUPPORTED", the browser hasn't found your headset: make sure SteamVR is running and the headset is connected, then restart the browser.
 
-If clicking the video doesn't enter VR, close other browser windows that use the headset; only one browser can be in VR at a time. The popup shows why the last attempt failed.
+If entering VR fails with "The VR runtime couldn't start a session" (shown below the Enter VR button on YouTube, and in the popup on other sites), something else is holding the headset. Only one app can be in VR at a time:
+- Another browser, window or app is in VR, or was and didn't let go. Exit VR there. If that doesn't help, close the browser completely, every window, and open it again; if it still fails, restart SteamVR
+- On the Steam Frame, start the browser from the app menu, not from your Steam library as a non-Steam game: Steam then counts the browser itself as the running VR app and refuses its WebXR session
+
+If clicking the video on other sites doesn't enter VR, the popup shows why the last attempt failed.
 
 If you don't see the white cardboard icon in the bottom right hand corner of a YouTube video then the extension is not installed or disabled
 
