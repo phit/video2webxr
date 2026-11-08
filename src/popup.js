@@ -131,11 +131,12 @@ async function init() {
     setStatus('Video found. Enter VR, then click the video in the page.');
     enterButton.disabled = false;
     showState(target.state);
+    if (target.state === 'none') return;
+    const reply = await send({ type: 'state' }).catch(() => ({}));
+    // in VR, the projection shown, which may have been detected as 3D
+    if (target.state === 'active' && reply.projection) projectionSelect.value = reply.projection;
     // tell the user why the last attempt didn't work
-    if (target.state === 'idle') {
-        const reply = await send({ type: 'state' }).catch(() => ({}));
-        if (reply.error) setStatus(reply.error, true);
-    }
+    if (target.state === 'idle' && reply.error) setStatus(reply.error, true);
 }
 
 async function initYouTube() {

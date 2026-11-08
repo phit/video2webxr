@@ -1,5 +1,6 @@
 import { armClick } from './click-to-enter.js';
 import { DEFAULT_PROJECTION, enterVRError } from './projections.js';
+import { detectStereo } from './stereo.js';
 import { VRPlayer } from './vr-player.js';
 
 // Injected by the popup into the frame with the largest video. The popup sends commands; the
@@ -101,6 +102,9 @@ function createController() {
         // the site doesn't see this click, so start playback ourselves
         if (video.paused) video.play().catch(() => {});
         player = new VRPlayer(video, projection);
+        // a mono projection switches to its 3D variant if the frames turn out to be 3D
+        const vrPlayer = player;
+        detectStereo(vrPlayer, { isCurrent: () => player === vrPlayer });
         state = 'starting';
         console.log('video2webxr: entering VR');
         player
@@ -156,7 +160,7 @@ function createController() {
         async handle(message) {
             switch (message.type) {
                 case 'state':
-                    return { state, projection, error: lastError };
+                    return { state, projection: player?.projection ?? projection, error: lastError };
                 case 'arm':
                     return arm(message.projection);
                 case 'setProjection':

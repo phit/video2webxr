@@ -40,7 +40,7 @@ The toolbar button works on YouTube too, as on other sites: click "Enter VR" in 
 **On other sites**
 1. Start playing the video
 2. Click the video2webxr button in the browser toolbar (pin it from the extensions menu)
-3. Pick the projection in the popup (defaults to Flat screen; your choice is remembered) and click "Enter VR"
+3. Pick the projection in the popup (defaults to Flat screen; your choice is remembered) and click "Enter VR". You only need to pick flat, 360° or 180°: if the video turns out to be 3D side by side or top/bottom, it switches to the 3D option by itself
 4. Click the video in the page to enter VR. Browsers only start VR from a click in the page itself, so this step can't be skipped
 5. Use the controls in VR, or open the popup again to change the projection or click "Stop"
 
@@ -88,7 +88,7 @@ A controls panel floats below the video: play/pause, the seek bar, skip 10 secon
 | 180° | VR180 videos on YouTube, and other mono 180° videos |
 | 180° 3D side by side | 3D 180° videos with both eyes side by side, the most common VR video format |
 | Flat screen (other sites' default) | normal videos, shown on a virtual screen in front of you |
-| Flat screen 3D side by side, top/bottom | 3D movies and clips with both eyes side by side or above each other, on the same virtual screen. Works for both half size (a normal 16:9 frame) and full size (32:9 or 16:18); on YouTube it's picked automatically |
+| Flat screen 3D side by side, top/bottom | 3D movies and clips with both eyes side by side or above each other, on the same virtual screen. Works for both half size (a normal 16:9 frame) and full size (32:9 or 16:18); picked automatically, on YouTube and other sites |
 | Flat screen 3D (AI) | normal videos turned 3D: an AI model estimates the depth of every frame and the screen takes its shape. Needs a GPU with WebGPU, so PC VR only for now; not on the Steam Frame yet, while Chrome there is still waiting on updates from Valve. The first time you pick it, the extension downloads the 50 MB model from Hugging Face once, for every site; nothing is sent there but the download request |
 
 You can switch the projection while in VR, from the panel. If the image looks jumbled into squares, try a 360° EAC option; if it looks stretched or doubled, try the others.
