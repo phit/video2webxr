@@ -1,4 +1,5 @@
 import cardboardSvg from '../icons/cardboard.svg';
+import { armClick } from './click-to-enter.js';
 import { halvesCorrelation, STEREO_THRESHOLD } from './stereo.js';
 import { VRPlayer } from './vr-player.js';
 
@@ -150,8 +151,9 @@ function detectStereo(vrPlayer, mono, votes = {}, attempt = 0) {
 
 // Everything is looked up from the player whose icon was clicked: YouTube keeps pages it
 // navigated away from in the DOM, hidden, so a channel page's #alerts comes before the
-// watch page's in the document
-function EnableVRVideo(ytPlayer) {
+// watch page's in the document. picked: a projection the user chose in the popup, which skips
+// the detection
+function EnableVRVideo(ytPlayer, picked) {
     const videoElement = ytPlayer.querySelector('video');
     console.log(`enabling VR on ${videoElement}`);
 
@@ -165,9 +167,9 @@ function EnableVRVideo(ytPlayer) {
         spherecontrol.remove();
     }
 
-    const projection = detectProjection();
+    const projection = picked || detectProjection();
     player = new VRPlayer(videoElement, projection);
-    detectStereo(player, projection);
+    if (!picked) detectStereo(player, projection);
 
     const container = ytPlayer.querySelector('.html5-video-container');
     container.appendChild(player.canvas);
@@ -187,6 +189,67 @@ function EnableVRVideo(ytPlayer) {
 document.addEventListener('yt-navigate-start', () => {
     if (!player) return;
     console.log('disabling VR');
+    disarm?.();
+    disarm = null;
     player.dispose();
     player = null;
+});
+
+// The toolbar popup's commands, the same ones generic.js answers on other sites, so VR can be
+// started from there too. YouTube's own player is used either way: the popup turns it on like
+// the cardboard icon, then waits for a click on the video, since Chrome only starts VR from a
+// click in the page.
+let disarm = null; // stops waiting for that click
+
+function popupState() {
+    if (!player) return { state: 'none' };
+    let state = 'idle';
+    if (player.renderer.xr.isPresenting) state = 'active';
+    else if (disarm) state = 'armed';
+    return { state, projection: player.projection, error: player.lastError ?? null };
+}
+
+function arm(picked) {
+    if (!player) {
+        const ytPlayer = document.querySelector('#movie_player');
+        if (!ytPlayer?.querySelector('video')) return { error: 'No video found on this page.' };
+        EnableVRVideo(ytPlayer, picked);
+    } else if (picked) {
+        player.setProjection(picked);
+    }
+    if (player.renderer.xr.isPresenting) return popupState();
+    disarm?.();
+    const armed = player;
+    disarm = armClick(armed.video, () => {
+        disarm = null;
+        // YouTube doesn't see this click, so start playback here
+        if (armed.video.paused) armed.video.play().catch(() => {});
+        armed.startSession();
+    });
+    return popupState();
+}
+
+function handlePopup(message) {
+    switch (message.type) {
+        case 'state':
+            return popupState();
+        case 'arm':
+            return arm(message.projection);
+        case 'setProjection':
+            player?.setProjection(message.projection);
+            return popupState();
+        case 'stop':
+            disarm?.();
+            disarm = null;
+            player?.renderer.xr.getSession()?.end();
+            return popupState();
+    }
+}
+
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    try {
+        sendResponse(handlePopup(message));
+    } catch (e) {
+        sendResponse({ error: e.message });
+    }
 });

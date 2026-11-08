@@ -35,6 +35,8 @@ On the Steam Frame itself, skip these two steps: just open Chromium or Chrome.
 
    ![YouTube with the Enter VR button and the projection dropdown set to 360° EAC 3D](docs/screenshots/youtube-eac-3d.jpg)
 
+The toolbar button works on YouTube too, as on other sites: click "Enter VR" in the popup, then click the video. The projection is still detected automatically unless you pick one in the popup.
+
 **On other sites**
 1. Start playing the video
 2. Click the video2webxr button in the browser toolbar (pin it from the extensions menu)
@@ -108,7 +110,8 @@ Sources are in `src/`:
 - `youtube.js`: YouTube integration (the cardboard icon, projection detection)
 - `youtube-page.js`: runs in YouTube's own page context to read the player's data
 - `stereo.js`: tells 3D frames from mono ones
-- `generic.js`, `popup.*`: the toolbar button and its popup for other sites
+- `generic.js`, `popup.*`: the toolbar button and its popup for other sites (on YouTube, the popup drives `youtube.js`)
+- `click-to-enter.js`: "click the video to enter VR", shared by both
 - `vr-player.js`: the shared WebXR player and projections
 - `depth.js`, `model.js`, `background.js`: depth for "Flat screen 3D (AI)"; the service worker downloads the model
 - `vr-controls.js`: the in-VR panel, lasers, moving and resizing

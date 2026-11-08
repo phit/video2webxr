@@ -1,4 +1,5 @@
-import { DEFAULT_PROJECTION } from './projections.js';
+import { armClick } from './click-to-enter.js';
+import { DEFAULT_PROJECTION, enterVRError } from './projections.js';
 import { VRPlayer } from './vr-player.js';
 
 // Injected by the popup into the frame with the largest video. The popup sends commands; the
@@ -93,89 +94,10 @@ function createController() {
     let projection = DEFAULT_PROJECTION;
     let video = null;
     let player = null;
-    let hint = null;
     let removedCheck = null;
-
-    function showHint(text) {
-        hideHint();
-        const rect = video.getBoundingClientRect();
-        hint = document.createElement('div');
-        hint.textContent = text;
-        Object.assign(hint.style, {
-            position: 'fixed',
-            left: `${rect.left + rect.width / 2}px`,
-            top: `${rect.top + rect.height / 2}px`,
-            transform: 'translate(-50%, -50%)',
-            zIndex: '2147483647',
-            pointerEvents: 'none', // clicks go through to the video
-            padding: '12px 18px',
-            borderRadius: '6px',
-            background: 'rgba(0,0,0,0.75)',
-            color: '#fff',
-            font: 'normal 15px sans-serif',
-        });
-        // next to the video, so it shows inside lightboxes and fullscreen elements too
-        (video.parentElement || document.body).appendChild(hint);
-    }
-
-    function hideHint() {
-        hint?.remove();
-        hint = null;
-    }
-
-    // All events of the click that enters VR. The site must see none of them, or it may pause the
-    // video, close its lightbox or start a drag.
-    const GESTURE_EVENTS = ['pointerdown', 'mousedown', 'touchstart', 'pointerup', 'mouseup', 'touchend', 'click'];
-    let gestureStarted = false;
-    let vrRequested = false;
-    let gestureTimeout = null;
-
-    function isOnVideo(event) {
-        const { clientX, clientY } = event.changedTouches?.[0] ?? event;
-        const rect = video.getBoundingClientRect();
-        return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
-    }
-
-    // Chrome only starts VR from events that count as user activation
-    function activatesUser(event) {
-        if (event.type === 'pointerdown') return event.pointerType !== 'touch';
-        if (event.type === 'pointerup') return event.pointerType === 'touch';
-        return event.type === 'mousedown' || event.type === 'touchend' || event.type === 'click';
-    }
-
-    function listenToGesture(listen) {
-        for (const type of GESTURE_EVENTS) {
-            if (listen) window.addEventListener(type, onGestureEvent, { capture: true, passive: false });
-            else window.removeEventListener(type, onGestureEvent, true);
-        }
-    }
-
-    // capture phase on window, so this runs before the site's own handlers
-    function onGestureEvent(event) {
-        if (!gestureStarted) {
-            if (!isOnVideo(event)) return;
-            gestureStarted = true;
-            // swallow the rest of this click wherever it ends, then stop listening
-            gestureTimeout = setTimeout(endGesture, 1000);
-        }
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        if (!vrRequested && activatesUser(event)) {
-            vrRequested = true;
-            startVR();
-        }
-        if (event.type === 'click') endGesture();
-    }
-
-    function endGesture() {
-        clearTimeout(gestureTimeout);
-        listenToGesture(false);
-        gestureStarted = false;
-        vrRequested = false;
-    }
+    let disarm = null; // stops waiting for the click on the video
 
     function startVR() {
-        hideHint();
         // the site doesn't see this click, so start playback ourselves
         if (video.paused) video.play().catch(() => {});
         player = new VRPlayer(video, projection);
@@ -191,18 +113,13 @@ function createController() {
             .catch((e) => {
                 console.warn('video2webxr: entering VR failed:', e);
                 stop();
-                // what Chrome reports when SteamVR refuses the session, usually because another
-                // browser already holds the headset
-                lastError =
-                    e.name === 'NotSupportedError'
-                        ? "The VR runtime couldn't start a session. Another browser or app may be using the headset: close it, or restart SteamVR, and try again."
-                        : `Entering VR failed: ${e.message}`;
+                lastError = enterVRError(e);
             });
     }
 
     function stop() {
-        endGesture();
-        hideHint();
+        disarm?.();
+        disarm = null;
         clearInterval(removedCheck);
         video?.removeEventListener('emptied', stop);
         player?.dispose();
@@ -227,8 +144,7 @@ function createController() {
         removedCheck = setInterval(() => {
             if (!video.isConnected) stop();
         }, 1000);
-        listenToGesture(true);
-        showHint('Click the video to enter VR');
+        disarm = armClick(video, startVR);
         state = 'armed';
         return { state };
     }

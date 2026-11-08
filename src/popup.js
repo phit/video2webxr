@@ -10,6 +10,9 @@ const stopButton = document.getElementById('stop');
 
 let tab;
 let target = null; // { frameId, state } of the frame with the video
+// On YouTube the extension's YouTube integration (youtube.js, always in the page) answers the
+// same commands as generic.js, with its own projection detection
+let onYouTube = false;
 
 function setStatus(text, isError = false) {
     status.textContent = text;
@@ -66,15 +69,17 @@ function send(message) {
 async function enter() {
     enterButton.disabled = true;
     try {
-        if (target.state === 'none') {
+        if (target.state === 'none' && !onYouTube) {
             await chrome.scripting.executeScript({
                 target: { tabId: tab.id, frameIds: [target.frameId] },
                 files: ['generic.js'],
             });
         }
-        const reply = await send({ type: 'arm', projection: projectionSelect.value });
+        // on YouTube an empty value means "detect automatically"
+        const reply = await send({ type: 'arm', projection: projectionSelect.value || undefined });
         if (reply.error) setStatus(reply.error, true);
         else showState(reply.state);
+        if (reply.projection) projectionSelect.value = reply.projection;
     } catch (e) {
         setStatus(`Couldn't start: ${e.message}`, true);
     }
@@ -95,16 +100,22 @@ async function init() {
     projectionSelect.value = localStorage.getItem('projection') || DEFAULT_PROJECTION;
     if (!projectionSelect.value) projectionSelect.value = DEFAULT_PROJECTION; // remembered but unavailable
     projectionSelect.onchange = () => {
-        localStorage.setItem('projection', projectionSelect.value);
-        if (target && target.state !== 'none')
+        // the remembered choice is for other sites; YouTube detects the projection per video
+        if (!onYouTube) localStorage.setItem('projection', projectionSelect.value);
+        if (target && target.state !== 'none' && projectionSelect.value)
             send({ type: 'setProjection', projection: projectionSelect.value }).catch(() => {});
     };
     enterButton.onclick = enter;
     stopButton.onclick = stop;
 
     [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (/^https?:\/\/([^/]+\.)?youtube\.com\/watch/.test(tab.url || '')) {
+        await initYouTube();
+        return;
+    }
     if (/^https?:\/\/([^/]+\.)?youtube\.com\//.test(tab.url || '')) {
-        setStatus('On YouTube, use the cardboard icon in the video player.');
+        setStatus('Open a video on YouTube to watch it in VR.');
+        projectionSelect.disabled = true;
         return;
     }
     try {
@@ -125,6 +136,27 @@ async function init() {
         const reply = await send({ type: 'state' }).catch(() => ({}));
         if (reply.error) setStatus(reply.error, true);
     }
+}
+
+async function initYouTube() {
+    onYouTube = true;
+    projectionSelect.add(new Option('Detect automatically', ''), 0);
+    projectionSelect.value = '';
+    target = { frameId: 0, state: 'none' };
+    let reply;
+    try {
+        reply = await send({ type: 'state' });
+    } catch {
+        setStatus('Reload the page to use video2webxr on it.', true); // opened before the extension
+        return;
+    }
+    enterButton.disabled = false;
+    showState(reply.state);
+    if (reply.projection) projectionSelect.value = reply.projection;
+    if (reply.state === 'none' || reply.state === 'idle') {
+        setStatus('Enter VR, then click the video. You can also use the cardboard icon in the player.');
+    }
+    if (reply.error) setStatus(reply.error, true);
 }
 
 init();
