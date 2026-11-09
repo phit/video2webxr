@@ -172,7 +172,6 @@ function eacMesh(material, mapMatrix = new THREE.Matrix3(), scaleMatrix = new TH
                 vec2 p = (vUv - corner) / faceWHadj - .5;
                 vec2 q = 2. / PI * atan(2. * p) + .5;
                 gl_FragColor = texture2D(mapped, corner + q * faceWHadj);
-                #include <colorspace_fragment>
             }`,
     });
     return boxMesh(shader, faces, layer);
