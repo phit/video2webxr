@@ -253,7 +253,19 @@ function depthScreenMesh(material, depth, strength) {
         Math.round(DEPTH_MESH_COLUMNS / aspect),
     );
     const shader = new THREE.ShaderMaterial({
-        uniforms: { mapped: depth.picture, depthMap: { value: depth.texture }, strength },
+        // three.js uploads video textures as they are, without decoding sRGB like it does for
+        // the depth source's frames, so the live video (shown until the first estimate) is
+        // decoded here; the built-in materials do the same
+        uniforms: {
+            mapped: depth.picture,
+            depthMap: { value: depth.texture },
+            strength,
+            decodeVideo: {
+                get value() {
+                    return depth.picture.value.isVideoTexture === true;
+                },
+            },
+        },
         vertexShader: `
             varying vec2 vUv;
             uniform sampler2D depthMap;
@@ -268,8 +280,10 @@ function depthScreenMesh(material, depth, strength) {
         fragmentShader: `
             varying vec2 vUv;
             uniform sampler2D mapped;
+            uniform bool decodeVideo;
             void main() {
                 gl_FragColor = texture2D(mapped, vUv);
+                if (decodeVideo) gl_FragColor = sRGBTransferEOTF(gl_FragColor);
                 #include <colorspace_fragment>
             }`,
     });
