@@ -170,7 +170,9 @@ async function init() {
     stopButton.onclick = stop;
     allowButton.onclick = allow;
 
-    [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    // the e2e tests open the popup as a page and name the tab: popup.html?tab=<id>
+    const testTab = Number(new URLSearchParams(location.search).get('tab'));
+    [tab] = testTab ? [await chrome.tabs.get(testTab)] : await chrome.tabs.query({ active: true, currentWindow: true });
     // live streams also play at /live/<id>
     if (/^https?:\/\/([^/]+\.)?youtube\.com\/(watch|live\/)/.test(tab.url || '')) {
         await initYouTube();

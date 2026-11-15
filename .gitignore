@@ -4,3 +4,6 @@ dist
 *.zip
 AGENTS.md
 BACKLOG.md
+dist-e2e
+test-results
+playwright-report
