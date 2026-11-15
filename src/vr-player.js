@@ -309,7 +309,7 @@ export class VRPlayer {
 
         // a near plane of a few centimetres, so the controls panel and a screen pulled close
         // aren't clipped away (the XR session takes its depth range from this camera)
-        this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 2000);
+        this.camera = new THREE.PerspectiveCamera(70, 1, 0.05, 2000);
         this.camera.layers.enable(1); // render left view when no stereo available
 
         const texture = new THREE.VideoTexture(video);
@@ -356,31 +356,35 @@ export class VRPlayer {
         video.addEventListener('resize', this.onVideoResize);
 
         // antialias also turns on multisampling for the headset's image (three.js passes it on
-        // to the XR layer), which smooths the edges of the screen, panel and lasers
+        // to the XR layer), which smooths the edges of the screen, panel and lasers. The canvas
+        // itself is never shown, so it's kept tiny.
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setSize(1, 1, false);
         this.renderer.xr.enabled = true;
         this.renderer.xr.setReferenceSpaceType('local');
         this.renderer.autoClear = false;
         this.vrControls = new VRControls(this);
         this.timer = new THREE.Timer();
+        // Nothing is shown outside VR, so render (and estimate depth) only in a session. The
+        // loop stays set: three.js switches it between the page's and the session's frames.
         this.renderer.setAnimationLoop((timestamp) => {
+            if (!this.renderer.xr.isPresenting) return;
             this.timer.update(timestamp);
-            this.vrControls.update(this.timer.getDelta());
+            // a long first frame shouldn't count as time the controllers stood still
+            this.vrControls.update(Math.min(this.timer.getDelta(), 0.1));
             this.placeSphere();
             this.render();
         });
-        this.onSessionEnd = () => this.setPassthrough(false);
-        this.renderer.xr.addEventListener('sessionend', this.onSessionEnd);
-
-        this.onWindowResize = () => {
-            if (this.renderer.xr.isPresenting) return;
-            this.camera.aspect = window.innerWidth / window.innerHeight;
-            this.camera.updateProjectionMatrix();
-            this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.onSessionStart = () => {
+            this.timer.reset();
+            if (this.projection === 'FLAT_AI') this.depthSource().start();
         };
-        window.addEventListener('resize', this.onWindowResize);
+        this.onSessionEnd = () => {
+            this.depth?.stop();
+            this.setPassthrough(false);
+        };
+        this.renderer.xr.addEventListener('sessionstart', this.onSessionStart);
+        this.renderer.xr.addEventListener('sessionend', this.onSessionEnd);
     }
 
     // Starts an immersive session. Chrome only allows this from a user gesture in the page,
@@ -433,10 +437,6 @@ export class VRPlayer {
         if (this.renderer.xr.isPresenting) this.renderer.getContext().flush();
     }
 
-    get canvas() {
-        return this.renderer.domElement;
-    }
-
     setProjection(name) {
         this.projection = name;
         if (this.select) this.select.value = name;
@@ -444,8 +444,8 @@ export class VRPlayer {
         this.meshes = PROJECTIONS[name].build(this.material, this);
         const parent = this.isFlat ? this.screen : this.sphere;
         for (const mesh of this.meshes) parent.add(mesh);
-        // estimate depth only while it's shown
-        if (name === 'FLAT_AI') this.depthSource().start();
+        // estimate depth only while it's shown in VR
+        if (name === 'FLAT_AI' && this.renderer?.xr.isPresenting) this.depthSource().start();
         else this.depth?.stop();
     }
 
@@ -599,13 +599,12 @@ export class VRPlayer {
         this.renderer.setAnimationLoop(null);
         this.vrControls.dispose();
         this.video.removeEventListener('resize', this.onVideoResize);
-        window.removeEventListener('resize', this.onWindowResize);
         this.disposeMeshes();
         this.material.map.dispose();
         this.material.dispose();
         this.depth?.dispose();
+        this.renderer.xr.removeEventListener('sessionstart', this.onSessionStart);
         this.renderer.xr.removeEventListener('sessionend', this.onSessionEnd);
-        this.canvas.remove();
         if (this.controls) this.controls.remove();
         this.renderer.dispose();
     }

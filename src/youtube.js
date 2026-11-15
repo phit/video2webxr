@@ -115,9 +115,6 @@ function EnableVRVideo(ytPlayer, picked) {
             skip: () => !!ytPlayer.classList.contains('ad-showing'),
         });
 
-    const container = ytPlayer.querySelector('.html5-video-container');
-    container.appendChild(player.canvas);
-
     // clean alerts box and add VR button
     const alertsbox = ytPlayer.closest('ytd-watch-flexy')?.querySelector('#alerts');
     if (alertsbox) {
