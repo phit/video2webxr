@@ -10,6 +10,8 @@ A Chromium extension that plays web videos in your PC VR headset through WebXR, 
 
 ### Install
 
+Needs Chrome, Edge, Brave or another Chromium browser, version 120 or newer.
+
 **From a store**
 - Chrome, Brave and other Chromium browsers: [Chrome Web Store](https://chromewebstore.google.com/detail/video2webxr/bacbclkmpiflnfeggheehlhhdmjjcfni)
 - Microsoft Edge: [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/video2webxr/pegmdbgaelolcgnfadanmahjnlallpon)
@@ -59,13 +61,14 @@ A controls panel floats below the video: play/pause, the seek bar, skip 10 secon
 | Use a control | Point the controller's laser at it and pull the trigger; hold the trigger to drag the seek or volume slider |
 | Hide or show the panel | Press A/X or B/Y. Pulling the trigger away from the screen also shows it, and it comes back in front of you if it was out of view. On 360° and 180° videos the lasers hide with the panel |
 | Get the lasers out of the way | Put the controller down or hold it still: after a few seconds its laser fades out, unless it points at the panel or the screen. Move it or press anything to bring it back |
+| Find a controller you put down | Look towards it: a small blue orb lights up where it lies |
 | Move the panel or the flat screen | Drag the bar below it with the trigger, or hold the grip anywhere on it. It stays upright and turns to face you |
 | Move it closer or further away | While holding it, push the thumbstick forward or back |
 | Resize the flat screen | Drag its bottom right corner, or push the thumbstick left or right while holding it |
 | Play or pause | Click the flat screen |
 | Skip 10 seconds back or forward | Double click the left or right third of the flat screen, like on YouTube's mobile app; each further click skips another 10 seconds |
 | Sit further back from a 180° video | Step backwards: the video stays where it is, as if it were a dome about 6 m across, so close-ups feel less in your face. Or press DISTANCE on the panel to step through three levels without moving (remembered per site). Recenter makes your current spot the centre again |
-| See the room around the screen | Press the passthrough button (the headset icon). It works where the browser supports AR with passthrough, e.g. Chromium or Chrome on the Steam Frame, and only shows there |
+| See the room around the screen | Press the passthrough button (the headset icon). It works where the browser supports AR with passthrough, e.g. Chromium or Chrome on the Steam Frame, and only shows there, on the flat screen and on 180° videos (a 360° video leaves no room to see) |
 | Put everything back in front of you | Recenter on the panel. On 360° and 180° videos it also turns the front of the video to where you look |
 
 ### Videos to try
@@ -96,7 +99,7 @@ You can switch the projection while in VR, from the panel. If the image looks ju
 
 ### Limitations
 - DRM-protected videos (Netflix, Prime Video, Disney+ etc.) can't be shown: the browser won't hand protected frames to WebGL
-- Videos served from another domain without CORS headers can't be read by WebGL either. The extension retries with CORS turned on; if the video's server doesn't allow that, the popup offers "Allow and retry": with your permission for that server and the page, it adds the missing header to the video's responses in that tab only, and reloads the video where it was. Some sites' video addresses redirect to another server (often a CDN) that can't be known in advance; for those it asks for access to all sites instead, still only changing video responses in that tab
+- Videos served from another domain without CORS headers can't be read by WebGL either. The extension retries with CORS turned on; if the video's server doesn't allow that, the popup offers "Allow and retry": with your permission for that server and the page, it adds the missing header to the video's responses in that tab only, for requests from that page's site, and reloads the video where it was. The change goes again when the tab moves to another site or closes. Some sites' video addresses redirect to another server (often a CDN) that can't be known in advance; for those it asks for access to all sites instead, still only changing video responses in that tab
 - On other sites the toolbar button can only reach videos in the page itself and in same-site frames
 
 ### Troubleshooting
@@ -114,25 +117,35 @@ If you don't see the white cardboard icon in the bottom right hand corner of a Y
 Sources are in `src/`:
 - `youtube.js`: YouTube integration (the cardboard icon, projection detection)
 - `youtube-page.js`: runs in YouTube's own page context to read the player's data
+- `page-controls.js`: the Enter VR button and projection dropdown below YouTube's player
 - `stereo.js`: tells 3D frames from mono ones
 - `generic.js`, `popup.*`: the toolbar button and its popup for other sites (on YouTube, the popup drives `youtube.js`)
+- `popup-protocol.js`: the commands the popup sends, answered by both
+- `cors-rule.js`: the popup's workaround for videos blocked by CORS
 - `click-to-enter.js`: "click the video to enter VR", shared by both
-- `vr-player.js`: the shared WebXR player and projections
+- `vr-player.js`: the shared WebXR player
+- `meshes.js`: the projections' meshes
 - `depth.js`, `model.js`, `background.js`: depth for "Flat screen 3D (AI)"; the service worker downloads the model
-- `vr-controls.js`: the in-VR panel, lasers, moving and resizing
-- `projections.js`: the projection names, shared by the player and the popup
+- `vr-controls.js`: the in-VR panel, lasers, controller orbs, moving and resizing
+- `projections.js`: the projection names and other shared constants
+- `log.js`: debug logging
 
 ```
 npm install
-npm run build   # builds the extension into dist/
-npm run watch   # unminified with source maps, rebuilt on change
+npm run build          # builds the extension into dist/
+npm run watch          # unminified with source maps and debug logs, rebuilt on change
+DEBUG=1 npm run build  # a minified build with debug logs
+npm test               # unit tests (test/*.test.js)
+npm run e2e            # end-to-end tests with Playwright (test/e2e/), see below
 ```
 Load `dist/` unpacked in the browser. `npm run check` lints and checks formatting with [Biome](https://biomejs.dev/), and `npm run fix` applies fixes; CI fails on either.
+
+The end-to-end tests build a test version into `dist-e2e/` (access to the local test pages granted up front, WebXR stubbed so no headset is needed) and run it in Playwright's Chromium against pages from `test/e2e/server.mjs` on ports 8601 and 8602. Install the browser once with `npx playwright install chromium`. They cover other sites through the popup, 3D detection and the CORS workaround; YouTube and everything in the headset is tested by hand. CI runs both test suites.
 
 Commit messages follow [Conventional Commits](https://www.conventionalcommits.org): `feat:`, `fix:`, `perf:`, `refactor:`, `docs:`, `build:`, `ci:`, `style:`, `chore:`, `test:`, optionally with a scope (`feat(youtube): ...`). Release notes are generated from them with [git-cliff](https://git-cliff.org); `npm run changelog` previews the notes for unreleased commits.
 
 ### Releasing
-Bump `version` in `manifest.json` and `package.json`, commit (`chore: release 2.1.0`), then push a matching tag: `git tag v2.1.0 && git push origin v2.1.0`. GitHub Actions builds the zip and publishes the release with the generated notes.
+Bump `version` in `manifest.json` and with `npm version 2.1.0 --no-git-tag-version` (`package.json` and `package-lock.json`), commit (`chore: release 2.1.0`), push it and wait for CI to pass, then push a matching tag: `git tag v2.1.0 && git push origin v2.1.0`. GitHub Actions builds the zip and publishes the release with the generated notes.
 
 ### Credits
 - Based on [EnableYoutubePCVR](https://github.com/feedthedogs/EnableYoutubePCVR) by feedthedogs (ISC)
