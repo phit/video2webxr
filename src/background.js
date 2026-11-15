@@ -83,7 +83,24 @@ chrome.runtime.onConnect.addListener(async (port) => {
 });
 
 // The popup's CORS workaround is a session rule with the tab's id (see popup.js); it's only
-// needed while the tab is open
-chrome.tabs.onRemoved.addListener((tabId) => {
+// needed while the tab shows the site it was made for
+const removeRule = (tabId) =>
     chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: [tabId] }).catch(() => {});
+
+chrome.tabs.onRemoved.addListener(removeRule);
+
+// The tab's URL is only visible with access to it, which the workaround has for its own site:
+// an unknown URL means another site
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+    if (changeInfo.status !== 'loading' && !changeInfo.url) return;
+    const [rule] = await chrome.declarativeNetRequest.getSessionRules({ ruleIds: [tabId] });
+    if (!rule) return;
+    const origin = rule.action.responseHeaders?.find((h) => h.header === 'Access-Control-Allow-Origin')?.value;
+    let current = null;
+    try {
+        current = new URL(tab.url).origin;
+    } catch {
+        // no access to the URL
+    }
+    if (current !== origin) removeRule(tabId);
 });

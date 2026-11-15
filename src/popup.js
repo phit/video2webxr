@@ -83,10 +83,11 @@ function corsOrigins({ src, origin }, scope) {
 
 // Makes the video's server allow the page to read it: a session rule for this tab only that
 // sets the CORS headers on media responses (from that server, or with 'all' from any, to cover
-// redirects), with cookies allowed so the video loads like before. background.js removes it
-// when the tab is closed.
+// redirects), with cookies allowed so the video loads like before. Only for requests from the
+// page's site, so other sites opened in the tab later aren't affected; background.js removes it
+// when the tab leaves that site or is closed.
 async function allowReading({ src, origin }, scope) {
-    const condition = { tabIds: [tab.id], resourceTypes: ['media'] };
+    const condition = { tabIds: [tab.id], resourceTypes: ['media'], initiatorDomains: [new URL(origin).hostname] };
     if (scope !== 'all') condition.requestDomains = [new URL(src).hostname];
     await chrome.declarativeNetRequest.updateSessionRules({
         removeRuleIds: [tab.id],
