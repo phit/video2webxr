@@ -36,6 +36,10 @@ const STILL_SECONDS = 3;
 const FADE_SECONDS = 0.4;
 const LASER_OPACITY = 0.5;
 const STICK_DEADZONE = 0.2;
+// While the seek bar is dragged: seek at most this often, and only for moves of more than this
+// fraction of the video (about 2 px on the bar)
+const SEEK_INTERVAL_MS = 150;
+const SEEK_MIN_FRACTION = 0.002;
 
 // xr-standard gamepad mapping
 const BUTTON_A_X = 4;
@@ -197,7 +201,11 @@ export class VRControls {
         };
         this.onSessionEnd = () => {
             this.panel.visible = false;
-            for (const controller of this.controllers) this.release(controller);
+            this.endSeek();
+            for (const controller of this.controllers) {
+                this.release(controller);
+                controller.userData.sliding = null;
+            }
         };
         this.renderer.xr.addEventListener('sessionstart', this.onSessionStart);
         this.renderer.xr.addEventListener('sessionend', this.onSessionEnd);
@@ -241,6 +249,7 @@ export class VRControls {
         });
         controller.addEventListener('selectstart', () => this.onTrigger(controller));
         controller.addEventListener('selectend', () => {
+            if (controller.userData.sliding === 'seek') this.endSeek();
             controller.userData.sliding = null;
             controller.userData.resizing = null;
             if (controller.userData.heldByTrigger) this.release(controller);
@@ -520,11 +529,32 @@ export class VRControls {
         const { x, w } = this.areas[area];
         const fraction = Math.min(1, Math.max(0, (point.x - x) / w));
         if (area === 'seek') {
-            if (Number.isFinite(this.video.duration)) this.video.currentTime = fraction * this.video.duration;
+            const duration = this.video.duration;
+            if (!Number.isFinite(duration)) return;
+            this.seekPreview = fraction * duration;
+            // every seek restarts loading, so only seek for a noticeable move, at most every
+            // SEEK_INTERVAL_MS; the knob follows the laser meanwhile and endSeek() lands exactly
+            const now = performance.now();
+            const moved = Math.abs(this.seekPreview - (this.seekedTo ?? -Infinity)) > duration * SEEK_MIN_FRACTION;
+            if (moved && !(now - this.seekedAt < SEEK_INTERVAL_MS)) {
+                this.video.currentTime = this.seekPreview;
+                this.seekedTo = this.seekPreview;
+                this.seekedAt = now;
+            }
         } else {
             this.video.volume = fraction;
             this.video.muted = fraction === 0;
         }
+    }
+
+    // The seek bar was let go: seek to where it ended up, if the last seek wasn't there
+    endSeek() {
+        if (this.seekPreview !== undefined && this.seekPreview !== this.seekedTo) {
+            this.video.currentTime = this.seekPreview;
+        }
+        this.seekPreview = undefined;
+        this.seekedTo = undefined;
+        this.seekedAt = undefined;
     }
 
     togglePanel() {
@@ -556,6 +586,7 @@ export class VRControls {
         const hover = controller.userData.hover;
         const target = hover?.object.userData.target ?? hover?.object;
         if (!target || this.controllers.some((c) => c.userData.held === target)) return;
+        if (controller.userData.sliding === 'seek') this.endSeek();
         Object.assign(controller.userData, {
             held: target,
             heldByTrigger: byTrigger,
@@ -620,8 +651,10 @@ export class VRControls {
             this.controllers.map((c) => this.areaAt(this.panelPoint(c.userData.hover?.hit))).filter(Boolean),
         );
         // only redraw when something visible changed
+        // while the seek bar is dragged, where it's dragged to
+        const position = this.seekPreview ?? video.currentTime;
         const state = [
-            Math.floor(video.currentTime),
+            Math.floor(position),
             Math.floor(video.duration),
             video.paused,
             video.muted,
@@ -744,14 +777,14 @@ export class VRControls {
         const seekable = Number.isFinite(duration) && duration > 0;
         const seekMid = areas.seek.y + areas.seek.h / 2;
         if (hovered.has('seek')) roundRect(16, ROW_TOP - 8, CANVAS_W - 32, 96, 4, THEME.focus);
-        text(formatTime(video.currentTime), 80, seekMid, { color: THEME.label });
+        text(formatTime(position), 80, seekMid, { color: THEME.label });
         text(seekable ? formatTime(duration) : 'LIVE', 1200, seekMid, {
             color: THEME.label,
             spacing: seekable ? 0 : 2,
         });
         const buffered =
             video.buffered.length && seekable ? video.buffered.end(video.buffered.length - 1) / duration : 0;
-        slider('seek', seekable ? video.currentTime / duration : 1, buffered);
+        slider('seek', seekable ? position / duration : 1, buffered);
 
         roundRect(16, ROW_BOTTOM - 14, CANVAS_W - 32, 2, 1, THEME.separator);
 
