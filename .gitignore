@@ -2,3 +2,5 @@ node_modules
 _metadata
 dist
 *.zip
+AGENTS.md
+BACKLOG.md
