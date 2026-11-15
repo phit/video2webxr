@@ -194,7 +194,8 @@ async function init() {
     allowButton.onclick = allow;
 
     [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (/^https?:\/\/([^/]+\.)?youtube\.com\/watch/.test(tab.url || '')) {
+    // live streams also play at /live/<id>
+    if (/^https?:\/\/([^/]+\.)?youtube\.com\/(watch|live\/)/.test(tab.url || '')) {
         await initYouTube();
         return;
     }
