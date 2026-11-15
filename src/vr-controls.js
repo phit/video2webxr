@@ -9,8 +9,8 @@ import { DISTANCES } from './vr-player.js';
 // trigger to move them (or hold the grip anywhere on them); while held, the thumbstick moves
 // them away/closer and resizes them. The screen's bottom right corner resizes it. A/X or B/Y
 // hide and show the panel, and the trigger shows it again too. A controller's laser fades out
-// while the controller lies still. Clicking the flat screen
-// plays/pauses; double clicking its left or right third skips back or forward.
+// while the controller lies still. Clicking the flat screen plays/pauses; double clicking its
+// left or right third skips back or forward.
 
 // The panel is drawn into a canvas and shown on a plane PANEL_WIDTH metres wide
 const CANVAS_W = 1280;
@@ -364,7 +364,7 @@ export class VRControls {
         const hit = data.held || data.resizing ? null : this.raycaster.intersectObjects(this.targets(), true)[0];
         data.hover = hit ? { object: this.hitTarget(hit.object), hit } : null;
         const length = hit ? this.hitDistance(hit) : LASER_LENGTH;
-        // hide the laser pointer in 360°/180°-view when hiding the panel; keep the pointer active at all times in Flatscreen
+        // on 360° and 180° videos the laser hides with the panel; on the flat screen it stays
         const isPointerVisible = this.player.isFlat || this.panel.visible || !!data.held || !!data.resizing;
         const fade = this.stillFade(controller, gamepad, delta);
         data.laser.visible = isPointerVisible && fade > 0;

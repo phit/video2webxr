@@ -488,12 +488,12 @@ export class VRPlayer {
         return this.depth;
     }
 
-    // The next 3D strength level of "Flat screen 3D (AI)", wrapping around
-    // what's holding up the AI depth (downloading the model, starting, failed), if it's shown
+    // What's holding up the AI depth (downloading the model, starting, failed), if it's shown
     get depthStatus() {
         return this.projection === 'FLAT_AI' ? (this.depth?.status ?? '') : '';
     }
 
+    // The next 3D strength level of "Flat screen 3D (AI)", wrapping around
     cycleDepthStrength() {
         const index = DEPTH_STRENGTHS.indexOf(this.depthStrength.value);
         this.depthStrength.value = DEPTH_STRENGTHS[(index + 1) % DEPTH_STRENGTHS.length];
