@@ -147,13 +147,19 @@ export class VRPlayer extends EventTarget {
     // Starts an immersive session. Chrome only allows this from a user gesture in the page,
     // so call it synchronously from a click handler. Where the browser supports AR, the
     // session is an AR one, which looks the same until passthrough is turned on.
+    // this.starting is true until the session has started or failed.
     async enterVR() {
         const mode = arSupported ? 'immersive-ar' : 'immersive-vr';
-        const session = await navigator.xr.requestSession(mode, {
-            optionalFeatures: ['local-floor', 'bounded-floor'],
-        });
-        await this.renderer.xr.setSession(session);
-        return session;
+        this.starting = true;
+        try {
+            const session = await navigator.xr.requestSession(mode, {
+                optionalFeatures: ['local-floor', 'bounded-floor'],
+            });
+            await this.renderer.xr.setSession(session);
+            return session;
+        } finally {
+            this.starting = false;
+        }
     }
 
     // enterVR() for YouTube's controls: why it failed goes to lastError, with a vrerror event.

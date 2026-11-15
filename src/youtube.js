@@ -128,6 +128,7 @@ function popupState() {
     if (!player) return { state: 'none' };
     let state = 'idle';
     if (player.renderer.xr.isPresenting) state = 'active';
+    else if (player.starting) state = 'starting';
     else if (disarm) state = 'armed';
     return { state, projection: player.projection, error: player.lastError ?? null };
 }
