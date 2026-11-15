@@ -62,16 +62,19 @@ export function showMessage(video, text, ms = 6000) {
     setTimeout(() => message.remove(), ms);
 }
 
+// A popover, so it's in the top layer: above lightboxes and a fullscreen player, and placed by
+// the window even when the page has transformed containers. It follows the video as the page
+// scrolls. Returns { remove }.
 function showHint(video, text) {
-    const rect = video.getBoundingClientRect();
     const hint = document.createElement('div');
+    hint.popover = 'manual';
     hint.textContent = text;
     Object.assign(hint.style, {
         position: 'fixed',
-        left: `${rect.left + rect.width / 2}px`,
-        top: `${rect.top + rect.height / 2}px`,
+        inset: 'auto',
+        margin: '0',
+        border: 'none',
         transform: 'translate(-50%, -50%)',
-        zIndex: '2147483647',
         pointerEvents: 'none', // clicks go through to the video
         padding: '12px 18px',
         borderRadius: '6px',
@@ -79,7 +82,21 @@ function showHint(video, text) {
         color: '#fff',
         font: 'normal 15px sans-serif',
     });
-    // next to the video, so it shows inside lightboxes and fullscreen elements too
-    (video.parentElement || document.body).appendChild(hint);
-    return hint;
+    const place = () => {
+        const rect = video.getBoundingClientRect();
+        hint.style.left = `${rect.left + rect.width / 2}px`;
+        hint.style.top = `${rect.top + rect.height / 2}px`;
+    };
+    place();
+    (document.body || document.documentElement).appendChild(hint);
+    hint.showPopover();
+    window.addEventListener('scroll', place, { capture: true, passive: true });
+    window.addEventListener('resize', place);
+    return {
+        remove() {
+            window.removeEventListener('scroll', place, { capture: true });
+            window.removeEventListener('resize', place);
+            hint.remove();
+        },
+    };
 }
