@@ -10,10 +10,12 @@ import { VRPlayer } from './vr-player.js';
 
 let player = null;
 let pageControls = null; // below the video while VR is enabled
+let hiddenViewers = []; // YouTube's own 360° viewer, hidden while VR is enabled
 
+// toggles VR for this video
 function handleCardboardIconClick(event) {
-    if (player) return; // already on
-    enableVRVideo(event.currentTarget.closest('.html5-video-player'));
+    if (player) disableVRVideo();
+    else enableVRVideo(event.currentTarget.closest('.html5-video-player'));
 }
 
 // A button like the player's own, so it has a tooltip and works from the keyboard
@@ -77,15 +79,9 @@ function detectProjection() {
 function enableVRVideo(ytPlayer, picked) {
     const videoElement = ytPlayer.querySelector('video');
 
-    // remove the webgl viewer of the 360 video
-    const webgl = ytPlayer.querySelector('.webgl');
-    if (webgl) {
-        webgl.remove();
-    }
-    const spherecontrol = ytPlayer.querySelector('.ytp-webgl-spherical-control');
-    if (spherecontrol) {
-        spherecontrol.remove();
-    }
+    // hide YouTube's 360° viewer and its controls; disableVRVideo() shows them again
+    hiddenViewers = [...ytPlayer.querySelectorAll('.webgl, .ytp-webgl-spherical-control')];
+    for (const element of hiddenViewers) element.style.display = 'none';
 
     const projection = picked || detectProjection();
     player = new VRPlayer(videoElement, projection);
@@ -102,9 +98,7 @@ function enableVRVideo(ytPlayer, picked) {
     ytPlayer.closest('ytd-watch-flexy')?.querySelector('#alerts')?.appendChild(pageControls);
 }
 
-// YouTube switches videos without a page load, so tear everything down when it navigates;
-// the cardboard icon can then enable VR again on the next video
-document.addEventListener('yt-navigate-start', () => {
+function disableVRVideo() {
     if (!player) return;
     disarm?.();
     disarm = null;
@@ -112,7 +106,13 @@ document.addEventListener('yt-navigate-start', () => {
     pageControls = null;
     player.dispose();
     player = null;
-});
+    for (const element of hiddenViewers) element.style.display = '';
+    hiddenViewers = [];
+}
+
+// YouTube switches videos without a page load, so tear everything down when it navigates;
+// the cardboard icon can then enable VR again on the next video
+document.addEventListener('yt-navigate-start', disableVRVideo);
 
 // The toolbar popup's commands, the same ones generic.js answers on other sites, so VR can be
 // started from there too. YouTube's own player is used either way: the popup turns it on like
