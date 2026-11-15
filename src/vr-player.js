@@ -607,6 +607,8 @@ export class VRPlayer {
         this.renderer.xr.removeEventListener('sessionend', this.onSessionEnd);
         if (this.controls) this.controls.remove();
         this.renderer.dispose();
+        // or Chrome keeps the context until garbage collection, and warns after a few videos
+        this.renderer.forceContextLoss();
     }
 }
 
