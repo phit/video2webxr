@@ -10,15 +10,22 @@ function handleCardboardIconClick(event) {
     EnableVRVideo(event.currentTarget.closest('.html5-video-player'));
 }
 
+// A button like the player's own, so it has a tooltip and works from the keyboard
 function createCardboardIcon() {
-    const icon = document.createElement('img');
-    icon.src = `data:image/svg+xml,${encodeURIComponent(cardboardSvg)}`;
-    icon.style.padding = '12px';
-    icon.style.boxSizing = 'border-box';
-    icon.id = 'cardboardimg';
-    icon.className = 'ytp-button';
-    icon.onclick = handleCardboardIconClick;
-    return icon;
+    const button = document.createElement('button');
+    button.id = 'cardboardimg';
+    button.className = 'ytp-button';
+    button.title = 'Watch in VR';
+    button.setAttribute('aria-label', 'Watch in VR');
+    button.style.padding = '12px';
+    button.style.boxSizing = 'border-box';
+    const image = document.createElement('img');
+    image.src = `data:image/svg+xml,${encodeURIComponent(cardboardSvg)}`;
+    image.alt = '';
+    Object.assign(image.style, { display: 'block', width: '100%', height: '100%' });
+    button.append(image);
+    button.onclick = handleCardboardIconClick;
+    return button;
 }
 
 // Puts the icon in the main player's controls (not the home page's hover previews). YouTube
