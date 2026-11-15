@@ -147,6 +147,26 @@ function resizeCorner(size) {
     });
 }
 
+// The laser: a thin open cone from the controller along -Z, 1 long, scaled uniformly to the
+// laser's length so it keeps the same apparent width at any distance (about 3 px in the
+// headset). A GL line is always 1 px wide, which a headset's reprojection and SteamVR's
+// chroma-keyed passthrough can lose entirely.
+const LASER_SPREAD = 0.0015; // the far end's radius per metre of length
+function laserMesh() {
+    const geometry = new THREE.CylinderGeometry(LASER_SPREAD, LASER_SPREAD / 4, 1, 8, 1, true);
+    geometry.translate(0, 0.5, 0); // from the controller (y 0) to the far end (y 1)...
+    geometry.rotateX(-Math.PI / 2); // ...turned to point along -Z
+    return new THREE.Mesh(
+        geometry,
+        new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: LASER_OPACITY,
+            depthWrite: false,
+        }),
+    );
+}
+
 export function formatTime(seconds) {
     if (!Number.isFinite(seconds)) return '--:--';
     const s = Math.floor(seconds % 60)
@@ -212,11 +232,8 @@ export class VRControls {
 
     createController(index) {
         const controller = this.renderer.xr.getController(index);
-        const laser = new THREE.Line(
-            new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)]),
-            new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: LASER_OPACITY }),
-        );
-        laser.scale.z = LASER_LENGTH;
+        const laser = laserMesh();
+        laser.scale.setScalar(LASER_LENGTH);
         const dot = new THREE.Mesh(
             new THREE.SphereGeometry(0.006, 12, 8),
             new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true }),
@@ -367,7 +384,7 @@ export class VRControls {
         const fade = this.stillFade(controller, gamepad, delta);
         data.laser.visible = isPointerVisible && fade > 0;
         data.laser.material.opacity = LASER_OPACITY * fade;
-        data.laser.scale.z = length;
+        data.laser.scale.setScalar(length);
         data.dot.visible = !!hit && fade > 0;
         data.dot.material.opacity = fade;
         data.dot.position.set(0, 0, -length);
@@ -657,7 +674,7 @@ export class VRControls {
         object.position.lerp(position, ease);
         object.quaternion.slerp(this.facing.quaternion, ease);
         object.scale.setScalar(THREE.MathUtils.lerp(object.scale.x, data.grabScale, ease));
-        data.laser.scale.z = data.grabDistance;
+        data.laser.scale.setScalar(data.grabDistance);
     }
 
     // Puts the screen, the panel and the front of 360°/180° videos where the viewer looks
