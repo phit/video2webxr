@@ -300,6 +300,21 @@ function depthScreenMesh(material, depth, strength) {
     return new THREE.Mesh(geometry, shader);
 }
 
+// The flat screen usually shows the video much smaller than its resolution (a 4K video on the
+// 2 m screen at 3 m), which shimmers without mipmaps. 360°/180° roughly match the headset's
+// resolution, so they skip the cost of making mipmaps for every frame.
+const SCREEN_ANISOTROPY = 8; // three.js caps it at what the GPU supports
+function useMipmaps(texture, on) {
+    if (texture.generateMipmaps === on) return;
+    texture.generateMipmaps = on;
+    texture.minFilter = on ? THREE.LinearMipmapLinearFilter : THREE.LinearFilter;
+    texture.anisotropy = on ? SCREEN_ANISOTROPY : 1;
+    // the GPU copy was allocated with the old number of mipmap levels; Texture's own dispose,
+    // since VideoTexture's would also stop the frame updates
+    THREE.Texture.prototype.dispose.call(texture);
+    texture.needsUpdate = true;
+}
+
 // Renders a <video> element into a WebXR session with a switchable projection
 export class VRPlayer {
     constructor(video, projection) {
@@ -444,6 +459,7 @@ export class VRPlayer {
         this.meshes = PROJECTIONS[name].build(this.material, this);
         const parent = this.isFlat ? this.screen : this.sphere;
         for (const mesh of this.meshes) parent.add(mesh);
+        useMipmaps(this.material.map, this.isFlat);
         // estimate depth only while it's shown in VR
         if (name === 'FLAT_AI' && this.renderer?.xr.isPresenting) this.depthSource().start();
         else this.depth?.stop();

@@ -122,9 +122,10 @@ export class DepthSource {
         // frames are ImageBitmaps stored upside down, the way the video texture is uploaded
         this.frameTexture = new THREE.Texture();
         this.frameTexture.colorSpace = THREE.SRGBColorSpace;
-        this.frameTexture.minFilter = THREE.LinearFilter;
+        // mipmapped like the flat screen's video (see useMipmaps() in vr-player.js)
+        this.frameTexture.minFilter = THREE.LinearMipmapLinearFilter;
         this.frameTexture.magFilter = THREE.LinearFilter;
-        this.frameTexture.generateMipmaps = false;
+        this.frameTexture.anisotropy = 8;
         this.frameTexture.flipY = false;
         this.running = false;
         this.generation = 0;
