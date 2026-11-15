@@ -23,6 +23,7 @@ jobs:
 
       - run: npm ci
       - run: npx biome ci .
+      - run: npm test
       - run: npm run build
 
       # unzips to a folder that can be loaded unpacked
