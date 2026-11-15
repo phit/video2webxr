@@ -3,6 +3,18 @@
 
 const SIZE = 64; // the frame is scaled down to SIZE x SIZE, which is plenty to compare halves
 
+// One canvas for every check, made on first use
+let frameContext = null;
+function scaledFrame() {
+    if (!frameContext) {
+        const canvas = document.createElement('canvas');
+        canvas.width = SIZE;
+        canvas.height = SIZE;
+        frameContext = canvas.getContext('2d', { willReadFrequently: true });
+    }
+    return frameContext;
+}
+
 // Correlation of two equally long brightness arrays, from -1 to 1; null if either is flat
 function correlation(a, b) {
     const n = a.length;
@@ -35,10 +47,7 @@ function correlation(a, b) {
 // best match counts: flat 3D videos have more parallax between the eyes than 360° ones.
 export function halvesCorrelation(video, split, maxShift = 0) {
     if (video.readyState < video.HAVE_CURRENT_DATA) return null;
-    const canvas = document.createElement('canvas');
-    canvas.width = SIZE;
-    canvas.height = SIZE;
-    const context = canvas.getContext('2d', { willReadFrequently: true });
+    const context = scaledFrame();
     let pixels;
     try {
         context.drawImage(video, 0, 0, SIZE, SIZE);
