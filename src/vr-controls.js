@@ -35,6 +35,11 @@ const STILL_SECONDS = 3;
 const FADE_SECONDS = 0.4;
 const LASER_OPACITY = 0.5;
 const STICK_DEADZONE = 0.2;
+// The laser's smoothing (see smoothPointer()): how quickly it follows the controller, in Hz,
+// when it's on target, and how much quicker for each degree it's behind. 0.2° of jitter is
+// followed at about 1.4 Hz, a 5° swing at about 11 Hz.
+const POINTER_MIN_CUTOFF = 1;
+const POINTER_CUTOFF_PER_DEGREE = 2;
 // While the seek bar is dragged: seek at most this often, and only for moves of more than this
 // fraction of the video (about 2 px on the bar)
 const SEEK_INTERVAL_MS = 150;
@@ -159,7 +164,7 @@ function laserMesh() {
     return new THREE.Mesh(
         geometry,
         new THREE.MeshBasicMaterial({
-            color: 0xffffff,
+            color: THEME.accent,
             transparent: true,
             opacity: LASER_OPACITY,
             depthWrite: false,
@@ -236,13 +241,18 @@ export class VRControls {
         laser.scale.setScalar(LASER_LENGTH);
         const dot = new THREE.Mesh(
             new THREE.SphereGeometry(0.006, 12, 8),
-            new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true }),
+            new THREE.MeshBasicMaterial({ color: THEME.accent, transparent: true }),
         );
         dot.visible = false;
-        controller.add(laser, dot);
+        // the laser hangs on a smoothed copy of the controller's pose, see smoothPointer()
+        const pointer = new THREE.Group();
+        pointer.add(laser, dot);
+        this.player.scene.add(pointer);
         controller.userData = {
             laser,
             dot,
+            pointer,
+            pointerReady: false, // snaps to the controller on its first pose
             hover: null, // { object: panel, screen or handle, hit }
             held: null, // what the controller carries
             heldByTrigger: false, // carried by a bar (trigger) rather than the grip
@@ -258,6 +268,7 @@ export class VRControls {
 
         controller.addEventListener('connected', (event) => {
             controller.userData.inputSource = event.data;
+            controller.userData.pointerReady = false;
         });
         controller.addEventListener('disconnected', () => {
             this.release(controller);
@@ -374,7 +385,7 @@ export class VRControls {
             }
         }
 
-        this.raycaster.setFromXRController(controller);
+        this.smoothPointer(controller, delta);
         if (data.resizing) this.resize(data.resizing, delta);
         const hit = data.held || data.resizing ? null : this.raycaster.intersectObjects(this.targets(), true)[0];
         data.hover = hit ? { object: this.hitTarget(hit.object), hit } : null;
@@ -394,6 +405,31 @@ export class VRControls {
             const point = this.panelPoint(hit);
             if (point) this.slide(data.sliding, point);
         }
+    }
+
+    // Moves the controller's pointer (the laser, and the ray everything is hit-tested with)
+    // towards its pose with an adaptive filter, like the One Euro filter: when the pointer is
+    // close to where the controller aims (holding still, aiming at a button) it follows slowly,
+    // which irons out tracking jitter; the further it's behind, the faster it catches up, so
+    // swinging the controller doesn't lag.
+    smoothPointer(controller, delta) {
+        const data = controller.userData;
+        const pointer = data.pointer;
+        pointer.visible = controller.visible; // no pose, no laser
+        if (!data.pointerReady) {
+            pointer.position.copy(controller.position);
+            pointer.quaternion.copy(controller.quaternion);
+            data.pointerReady = controller.visible;
+        }
+        const behind = THREE.MathUtils.radToDeg(pointer.quaternion.angleTo(controller.quaternion));
+        const cutoff = POINTER_MIN_CUTOFF + POINTER_CUTOFF_PER_DEGREE * behind; // Hz
+        const follow = 1 - Math.exp(-2 * Math.PI * cutoff * delta);
+        pointer.quaternion.slerp(controller.quaternion, follow);
+        pointer.position.lerp(controller.position, follow);
+        pointer.updateMatrixWorld();
+        const ray = this.raycaster.ray;
+        ray.origin.setFromMatrixPosition(pointer.matrixWorld);
+        ray.direction.set(0, 0, -1).transformDirection(pointer.matrixWorld);
     }
 
     // How visible the controller's laser is, 0-1: fading out once the controller has been still
@@ -965,10 +1001,12 @@ export class VRControls {
         for (const controller of this.controllers) {
             this.release(controller);
             this.player.scene.remove(controller);
-            for (const child of [...controller.children]) {
+            const pointer = controller.userData.pointer;
+            this.player.scene.remove(pointer);
+            for (const child of [...pointer.children]) {
                 child.geometry.dispose();
                 child.material.dispose();
-                controller.remove(child);
+                pointer.remove(child);
             }
         }
         for (const handle of this.handles) {
