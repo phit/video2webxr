@@ -127,43 +127,67 @@ export class DepthSource {
         this.frameTexture.generateMipmaps = false;
         this.frameTexture.flipY = false;
         this.running = false;
+        this.generation = 0;
+        this.looping = null;
+        this.loading = null; // the model's download and start-up
+        this.disposed = false;
         // what's holding the depth up, for the controls panel; empty once it's running
         this.status = '';
     }
 
+    // Stopping and starting again quickly (e.g. while the model downloads) must not run two
+    // loops at once: each start waits for the previous loop, which ends at its next check.
     start() {
-        if (this.running || this.failed) return;
+        if (this.running || this.failed || this.disposed) return;
         this.running = true;
-        this.loop();
+        const generation = ++this.generation;
+        const previous = this.looping;
+        this.looping = (async () => {
+            await previous;
+            await this.loop(generation);
+        })();
     }
 
     stop() {
         this.running = false;
     }
 
-    async loop() {
+    // One download and start-up, however often start() is called meanwhile
+    async load() {
+        const estimator = new DepthEstimator();
+        this.status = 'Starting…';
+        await estimator.load((progress) => {
+            this.status = progress < 1 ? `Downloading ${Math.floor(progress * 100)}%` : 'Starting…';
+        });
+        this.status = '';
+        if (this.disposed) estimator.dispose();
+        else this.estimator = estimator;
+    }
+
+    async loop(generation) {
+        const current = () => this.running && generation === this.generation;
         try {
-            if (!this.estimator) {
-                this.estimator = new DepthEstimator();
-                this.status = 'Starting…';
-                await this.estimator.load((progress) => {
-                    this.status = progress < 1 ? `Downloading ${Math.floor(progress * 100)}%` : 'Starting…';
-                });
-                this.status = '';
-            }
+            this.loading ??= this.load();
+            await this.loading;
             let lastTime = -1;
-            while (this.running) {
+            while (current()) {
                 const video = this.video;
                 // a paused video keeps its depth
                 if (video.readyState >= video.HAVE_CURRENT_DATA && video.currentTime !== lastTime) {
                     lastTime = video.currentTime;
                     const frame = await createImageBitmap(video, { imageOrientation: 'flipY' });
-                    this.update(await this.estimator.estimate(frame, true));
+                    const depth = await this.estimator.estimate(frame, true);
+                    if (this.disposed) {
+                        frame.close();
+                        return;
+                    }
+                    this.update(depth);
                     this.show(frame);
                 }
                 await new Promise((resolve) => setTimeout(resolve, 4));
             }
         } catch (e) {
+            if (this.disposed) return;
             // stays flat
             console.warn('video2webxr: depth estimation failed:', e);
             this.status = 'Unavailable';
@@ -217,8 +241,11 @@ export class DepthSource {
     }
 
     dispose() {
+        this.disposed = true;
         this.stop();
-        this.estimator?.dispose();
+        // once the loop is done, so the session isn't released during a run; load() releases
+        // one that's still starting
+        Promise.resolve(this.looping).then(() => this.estimator?.dispose());
         this.texture.dispose();
         this.frameTexture.image?.close();
         this.frameTexture.dispose();
