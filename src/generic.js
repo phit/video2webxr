@@ -1,4 +1,4 @@
-import { armClick } from './click-to-enter.js';
+import { armClick, showMessage } from './click-to-enter.js';
 import { DEFAULT_PROJECTION, enterVRError } from './projections.js';
 import { detectStereo } from './stereo.js';
 import { VRPlayer } from './vr-player.js';
@@ -10,6 +10,7 @@ import { VRPlayer } from './vr-player.js';
 
 const NOT_READABLE_CORS =
     "This site serves the video from another domain without allowing it to be read (CORS), so it can't be shown in VR.";
+const NOT_READABLE_EVEN_ALLOWED = "The video's server still refused to let it be read, so it can't be shown in VR.";
 
 function findVideos(root = document) {
     const videos = [...root.querySelectorAll('video')];
@@ -68,8 +69,17 @@ async function reloadWithCors(video, crossOrigin) {
     if (playing) video.play().catch(() => {});
 }
 
-// Returns why the video can't be used in VR, or null if it can
-async function whyUnusable(video) {
+// Where the video comes from, if the extension can make its server allow reading it: the
+// popup then asks for access to that server and adds the missing CORS header (see popup.js).
+// Not for blob: videos (fed by the page's own script) or data: URLs.
+function corsFixable(video) {
+    return /^https?:/.test(video.currentSrc) ? { src: video.currentSrc, origin: location.origin } : null;
+}
+
+// Returns why the video can't be used in VR, or null if it can. withHeader: the popup has made
+// the video's server allow this page to read it, so reload the video in CORS mode, with the
+// site's cookies like before.
+async function whyUnusable(video, withHeader = false) {
     if (video.mediaKeys) {
         return "This video is DRM-protected, so the browser won't let it be shown in VR.";
     }
@@ -78,6 +88,15 @@ async function whyUnusable(video) {
         if (video.readyState < video.HAVE_CURRENT_DATA) return null; // can't tell yet
     }
     if (isReadable(video)) return null;
+    if (withHeader && corsFixable(video)) {
+        try {
+            await reloadWithCors(video, video.crossOrigin ?? 'use-credentials');
+            if (isReadable(video)) return null;
+        } catch {
+            await reloadWithCors(video, null).catch(() => {});
+        }
+        return NOT_READABLE_EVEN_ALLOWED;
+    }
     if (video.crossOrigin !== null || video.currentSrc.startsWith('blob:')) return NOT_READABLE_CORS;
     try {
         await reloadWithCors(video, 'anonymous');
@@ -92,13 +111,41 @@ async function whyUnusable(video) {
 function createController() {
     let state = 'idle'; // idle | armed | starting | active
     let lastError = null;
+    let lastCors = null; // the blocked video's source, for the popup's workaround
     let projection = DEFAULT_PROJECTION;
     let video = null;
     let player = null;
     let removedCheck = null;
     let disarm = null; // stops waiting for the click on the video
 
+    // The video turned out to be blocked by CORS after arming: stop, and leave the popup what it
+    // needs to offer the workaround
+    function blocked() {
+        const blockedVideo = video;
+        stop();
+        lastError = NOT_READABLE_CORS;
+        lastCors = corsFixable(blockedVideo);
+        showMessage(blockedVideo, "This video can't be read yet. Open video2webxr's popup to fix it.");
+    }
+
     function startVR() {
+        // arming can't tell a video that hasn't loaded a frame yet (some sites only load it on
+        // play), so check again now: blocked by CORS, VR would only show black
+        if (!isReadable(video)) {
+            blocked();
+            return;
+        }
+        // no frame even now: check the first one when it arrives
+        if (video.readyState < video.HAVE_CURRENT_DATA) {
+            const clicked = video;
+            clicked.addEventListener(
+                'loadeddata',
+                () => {
+                    if (video === clicked && player && !isReadable(clicked)) blocked();
+                },
+                { once: true },
+            );
+        }
         // the site doesn't see this click, so start playback ourselves
         if (video.paused) video.play().catch(() => {});
         player = new VRPlayer(video, projection);
@@ -131,9 +178,11 @@ function createController() {
         state = 'idle';
     }
 
-    async function arm(newProjection) {
+    // withHeader: see whyUnusable()
+    async function arm(newProjection, withHeader) {
         projection = newProjection;
         lastError = null;
+        lastCors = null;
         if (state === 'active') {
             player.setProjection(projection);
             return { state };
@@ -141,7 +190,9 @@ function createController() {
         stop();
         video = largestVideo();
         if (!video) return { error: 'No video found on this page.' };
-        const problem = await whyUnusable(video);
+        const problem = await whyUnusable(video, withHeader);
+        if (problem === NOT_READABLE_CORS || problem === NOT_READABLE_EVEN_ALLOWED)
+            return { error: problem, cors: corsFixable(video) };
         if (problem) return { error: problem };
         // stop when the site swaps or removes the video
         video.addEventListener('emptied', stop);
@@ -160,9 +211,9 @@ function createController() {
         async handle(message) {
             switch (message.type) {
                 case 'state':
-                    return { state, projection: player?.projection ?? projection, error: lastError };
+                    return { state, projection: player?.projection ?? projection, error: lastError, cors: lastCors };
                 case 'arm':
-                    return arm(message.projection);
+                    return arm(message.projection, message.withHeader);
                 case 'setProjection':
                     projection = message.projection;
                     player?.setProjection(projection);

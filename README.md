@@ -95,7 +95,7 @@ You can switch the projection while in VR, from the panel. If the image looks ju
 
 ### Limitations
 - DRM-protected videos (Netflix, Prime Video, Disney+ etc.) can't be shown: the browser won't hand protected frames to WebGL
-- Videos served from another domain without CORS headers can't be read by WebGL either; the extension retries with CORS turned on and tells you if that doesn't work
+- Videos served from another domain without CORS headers can't be read by WebGL either. The extension retries with CORS turned on; if the video's server doesn't allow that, the popup offers "Allow and retry": with your permission for that server and the page, it adds the missing header to the video's responses in that tab only, and reloads the video where it was. Some sites' video addresses redirect to another server (often a CDN) that can't be known in advance; for those it asks for access to all sites instead, still only changing video responses in that tab
 - On other sites the toolbar button can only reach videos in the page itself and in same-site frames
 
 ### Troubleshooting

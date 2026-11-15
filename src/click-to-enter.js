@@ -56,6 +56,12 @@ export function armClick(video, onClick, hintText = 'Click the video to enter VR
     return disarm;
 }
 
+// A message over the video for a few seconds
+export function showMessage(video, text, ms = 6000) {
+    const message = showHint(video, text);
+    setTimeout(() => message.remove(), ms);
+}
+
 function showHint(video, text) {
     const rect = video.getBoundingClientRect();
     const hint = document.createElement('div');

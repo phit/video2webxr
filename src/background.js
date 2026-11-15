@@ -81,3 +81,9 @@ chrome.runtime.onConnect.addListener(async (port) => {
         if (open) port.postMessage({ error: String(e.message || e) });
     }
 });
+
+// The popup's CORS workaround is a session rule with the tab's id (see popup.js); it's only
+// needed while the tab is open
+chrome.tabs.onRemoved.addListener((tabId) => {
+    chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds: [tabId] }).catch(() => {});
+});

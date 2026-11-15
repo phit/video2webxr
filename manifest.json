@@ -27,7 +27,8 @@
         },
         "default_popup": "popup.html"
     },
-    "permissions": ["activeTab", "scripting"],
+    "permissions": ["activeTab", "scripting", "declarativeNetRequestWithHostAccess"],
+    "optional_host_permissions": ["<all_urls>"],
     "web_accessible_resources": [
         {
             "resources": ["ort/*"],

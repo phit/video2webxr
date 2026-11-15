@@ -26,6 +26,9 @@ h1 img {
 #status.error {
     color: #f28b82;
 }
+#allow {
+    margin-bottom: 12px;
+}
 label {
     display: block;
     margin-bottom: 4px;
