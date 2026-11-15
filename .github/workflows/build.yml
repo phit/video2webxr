@@ -24,6 +24,8 @@ jobs:
       - run: npm ci
       - run: npx biome ci .
       - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
       - run: npm run build
 
       # unzips to a folder that can be loaded unpacked

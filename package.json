@@ -8,6 +8,7 @@
         "watch": "node scripts/build.mjs --watch",
         "check": "biome check .",
         "test": "node --test \"test/*.test.js\"",
+        "e2e": "node scripts/build.mjs --e2e && playwright test",
         "fix": "biome check --write .",
         "changelog": "git-cliff --unreleased"
     },
@@ -23,6 +24,7 @@
     },
     "devDependencies": {
         "@biomejs/biome": "^2.5.15",
+        "@playwright/test": "^1.65.1",
         "esbuild": "^0.28.2",
         "git-cliff": "^2.14.2"
     },
