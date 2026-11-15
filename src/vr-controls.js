@@ -1,7 +1,6 @@
 import * as THREE from 'three';
-import { DEPTH_STRENGTHS } from './depth.js';
 import { forwardFromYaw } from './meshes.js';
-import { DISTANCES, PROJECTION_LABELS } from './projections.js';
+import { DEPTH_STRENGTHS, DISTANCES, PROJECTION_LABELS } from './projections.js';
 
 // In-VR controls: a laser from each controller, a panel with the video's controls, and
 // moving things around like in the Steam Frame's UI. Point the laser and pull the trigger to
@@ -13,8 +12,8 @@ import { DISTANCES, PROJECTION_LABELS } from './projections.js';
 // left or right third skips back or forward.
 
 // The panel is drawn into a canvas and shown on a plane PANEL_WIDTH metres wide
-const CANVAS_W = 1280;
-const CANVAS_H = 256;
+export const CANVAS_W = 1280;
+export const CANVAS_H = 256;
 const PANEL_WIDTH = 1.0;
 const PANEL_HEIGHT = (PANEL_WIDTH * CANVAS_H) / CANVAS_W;
 const SKIP_SECONDS = 10;
@@ -68,7 +67,7 @@ const BUTTON_GAP = 8;
 // and Exit; the projection switcher
 // takes whatever room is left
 const layouts = new Map();
-function layoutAreas(extras) {
+export function layoutAreas(extras) {
     const key = extras.join();
     if (!layouts.has(key)) {
         const areas = { ...FIXED_AREAS };
@@ -148,7 +147,7 @@ function resizeCorner(size) {
     });
 }
 
-function formatTime(seconds) {
+export function formatTime(seconds) {
     if (!Number.isFinite(seconds)) return '--:--';
     const s = Math.floor(seconds % 60)
         .toString()

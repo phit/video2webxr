@@ -51,3 +51,18 @@ export const DEFAULT_PROJECTION = 'FLAT';
 // less in your face, at the cost of some stretching towards the edges. Only a sizeable
 // fraction of the radius makes a difference, which is why this isn't just a step back.
 export const DISTANCES = [0, 0.25, 0.5, 0.8];
+
+// 3D strength levels for "Flat screen 3D (AI)": how far apart the nearest and farthest points
+// of the picture end up, in metres on the 2 m tall screen
+export const DEPTH_STRENGTHS = [0.3, 0.6, 1.0];
+
+// The projection YouTube's player info (from youtube-page.js) says a video has. YouTube serves
+// both 360° and VR180 videos as "MESH" on desktop; VR180 ones are marked partialSpherical.
+// Without info (no player yet) it guesses 360°, what the cardboard icon is mostly used for.
+export function youtubeProjection(info) {
+    if (!info) return 'EAC';
+    const is180 = info.partialSpherical;
+    if (info.projections.includes('MESH')) return is180 ? '180' : 'EAC';
+    if (info.projections.includes('EQUIRECTANGULAR')) return is180 ? '180' : '360';
+    return 'FLAT';
+}

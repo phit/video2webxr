@@ -3,7 +3,7 @@ import { debug } from './log.js';
 // Tells 3D videos from mono ones by their pixels: a 3D frame holds the two eyes' views next to
 // each other (or above each other), and those are nearly the same picture.
 
-const SIZE = 64; // the frame is scaled down to SIZE x SIZE, which is plenty to compare halves
+export const SIZE = 64; // the frame is scaled down to SIZE x SIZE, which is plenty to compare halves
 
 // One canvas for every check, made on first use
 let frameContext = null;
@@ -18,7 +18,7 @@ function scaledFrame() {
 }
 
 // Correlation of two equally long brightness arrays, from -1 to 1; null if either is flat
-function correlation(a, b) {
+export function correlation(a, b) {
     const n = a.length;
     let meanA = 0;
     let meanB = 0;
@@ -57,6 +57,11 @@ export function halvesCorrelation(video, split, maxShift = 0) {
     } catch {
         return null; // not readable (CORS)
     }
+    return pixelHalvesCorrelation(pixels, split, maxShift);
+}
+
+// halvesCorrelation() of a SIZE x SIZE RGBA frame
+export function pixelHalvesCorrelation(pixels, split, maxShift = 0) {
     const luma = (p) => pixels[p] * 0.3 + pixels[p + 1] * 0.59 + pixels[p + 2] * 0.11;
     // each eye's size in the scaled frame, and where the second eye starts
     const width = split === 'LR' ? SIZE / 2 : SIZE;

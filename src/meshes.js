@@ -24,7 +24,7 @@ const TOP_HALF = [0, 0.5, 1, 0.5],
 const EYE_EDGE_PX = 2;
 
 // Maps a geometry's 0-1 uvs onto a texture region of the video, trimmed at the shared edge
-function remapUV(geometry, [offsetU, offsetV, scaleU, scaleV], video) {
+export function remapUV(geometry, [offsetU, offsetV, scaleU, scaleV], video) {
     const trimU = scaleU < 1 && video.videoWidth ? EYE_EDGE_PX / video.videoWidth : 0;
     const trimV = scaleV < 1 && video.videoHeight ? EYE_EDGE_PX / video.videoHeight : 0;
     // the shared edge is where a half doesn't touch the frame's border

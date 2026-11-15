@@ -1,7 +1,14 @@
 import * as THREE from 'three';
-import { DEPTH_STRENGTHS, DepthSource } from './depth.js';
+import { DepthSource } from './depth.js';
 import { forwardFromYaw, PROJECTIONS, SPHERE_RADIUS } from './meshes.js';
-import { DISTANCES, depthSupported, enterVRError, FLAT_PROJECTIONS, PROJECTION_LABELS } from './projections.js';
+import {
+    DEPTH_STRENGTHS,
+    DISTANCES,
+    depthSupported,
+    enterVRError,
+    FLAT_PROJECTIONS,
+    PROJECTION_LABELS,
+} from './projections.js';
 import { VRControls } from './vr-controls.js';
 
 // Chrome exposes XRWebGLBinding.createProjectionLayer even when the session isn't granted

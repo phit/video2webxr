@@ -98,10 +98,6 @@ export class DepthEstimator {
     }
 }
 
-// 3D strength levels for "Flat screen 3D (AI)": how far apart the nearest and farthest points
-// of the picture end up, in metres on the 2 m tall screen
-export const DEPTH_STRENGTHS = [0.3, 0.6, 1.0];
-
 // How quickly the smoothed depth follows new estimates, per estimate (0-1): the depth range
 // moves slowly so the whole picture doesn't pump; each pixel follows almost at once, since
 // any lag there shows as depth trailing behind moving objects

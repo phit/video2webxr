@@ -3,6 +3,7 @@ import { armClick } from './click-to-enter.js';
 import { debug } from './log.js';
 import { createPageControls } from './page-controls.js';
 import { answerPopup, COMMANDS } from './popup-protocol.js';
+import { youtubeProjection } from './projections.js';
 import { detectStereo } from './stereo.js';
 import { VRPlayer } from './vr-player.js';
 
@@ -62,16 +63,10 @@ function playerInfo() {
     return info;
 }
 
-// The projection YouTube says the video has. YouTube serves both 360° and VR180 videos as
-// "MESH" on desktop; VR180 ones are marked partialSpherical.
 function detectProjection() {
     const info = playerInfo();
     debug('YouTube player info', info);
-    if (!info) return 'EAC';
-    const is180 = info.partialSpherical;
-    if (info.projections.includes('MESH')) return is180 ? '180' : 'EAC';
-    if (info.projections.includes('EQUIRECTANGULAR')) return is180 ? '180' : '360';
-    return 'FLAT';
+    return youtubeProjection(info);
 }
 
 // Everything is looked up from the player whose icon was clicked: YouTube keeps pages it

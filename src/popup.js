@@ -1,3 +1,4 @@
+import { ALL_SITES, corsOrigins, corsRule } from './cors-rule.js';
 import { COMMANDS } from './popup-protocol.js';
 import { DEFAULT_PROJECTION, depthSupported, PROJECTION_LABELS } from './projections.js';
 
@@ -75,37 +76,12 @@ let blocked = null;
 // 'all' for every site, needed when the video's server redirects to another one (often a CDN)
 // that can't be known in advance: a redirect's target can't be read without access to it
 let allowScope = 'servers';
-const ALL_SITES = ['<all_urls>'];
 
-// The access a scope needs for a blocked video
-function corsOrigins({ src, origin }, scope) {
-    return scope === 'all' ? ALL_SITES : [...new Set([`${new URL(src).origin}/*`, `${origin}/*`])];
-}
-
-// Makes the video's server allow the page to read it: a session rule for this tab only that
-// sets the CORS headers on media responses (from that server, or with 'all' from any, to cover
-// redirects), with cookies allowed so the video loads like before. Only for requests from the
-// page's site, so other sites opened in the tab later aren't affected; background.js removes it
-// when the tab leaves that site or is closed.
-async function allowReading({ src, origin }, scope) {
-    const condition = { tabIds: [tab.id], resourceTypes: ['media'], initiatorDomains: [new URL(origin).hostname] };
-    if (scope !== 'all') condition.requestDomains = [new URL(src).hostname];
+// Applies the workaround for this tab, see cors-rule.js
+async function allowReading(cors, scope) {
     await chrome.declarativeNetRequest.updateSessionRules({
         removeRuleIds: [tab.id],
-        addRules: [
-            {
-                id: tab.id,
-                priority: 1,
-                action: {
-                    type: 'modifyHeaders',
-                    responseHeaders: [
-                        { header: 'Access-Control-Allow-Origin', operation: 'set', value: origin },
-                        { header: 'Access-Control-Allow-Credentials', operation: 'set', value: 'true' },
-                    ],
-                },
-                condition,
-            },
-        ],
+        addRules: [corsRule(tab.id, cors, scope)],
     });
 }
 

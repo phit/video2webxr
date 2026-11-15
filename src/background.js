@@ -1,3 +1,4 @@
+import { ruleOrigin } from './cors-rule.js';
 import { MODEL, MODEL_PORT } from './model.js';
 
 // The extension's service worker. It downloads the depth model for the content scripts: from
@@ -95,7 +96,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (changeInfo.status !== 'loading' && !changeInfo.url) return;
     const [rule] = await chrome.declarativeNetRequest.getSessionRules({ ruleIds: [tabId] });
     if (!rule) return;
-    const origin = rule.action.responseHeaders?.find((h) => h.header === 'Access-Control-Allow-Origin')?.value;
+    const origin = ruleOrigin(rule);
     let current = null;
     try {
         current = new URL(tab.url).origin;
