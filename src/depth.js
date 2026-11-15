@@ -229,6 +229,15 @@ export class DepthSource {
         this.texture.needsUpdate = true;
     }
 
+    // The smoothed depth (0 far, 1 near) at a uv of the screen, 0.5 before the first estimate
+    depthAt(uv) {
+        const { width, height } = this.texture.image;
+        if (!this.smoothed || this.smoothed.length !== width * height) return 0.5;
+        const x = Math.round(Math.min(1, Math.max(0, uv.x)) * (width - 1));
+        const y = Math.round((1 - Math.min(1, Math.max(0, uv.y))) * (height - 1)); // first row is the top
+        return this.smoothed[y * width + x];
+    }
+
     // Puts the frame the latest depth belongs to on the screen
     show(frame) {
         const previous = this.frameTexture.image;

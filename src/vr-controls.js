@@ -308,10 +308,38 @@ export class VRControls {
         if (!flat) return;
         const { width, height } = this.screenSize();
         const scale = this.player.screen.scale.x;
+        // in front of the AI depth's relief, which can come up to half its strength forward
+        const relief = this.player.projection === 'FLAT_AI' ? this.player.depthStrength.value / 2 : 0;
         this.screenBar.scale.setScalar(1 / scale);
-        this.screenBar.position.set(0, -height / 2 - 0.07 / scale, 0.001);
+        this.screenBar.position.set(0, -height / 2 - 0.07 / scale, relief + 0.001);
         this.screenCorner.scale.setScalar(1 / scale);
-        this.screenCorner.position.set(width / 2, -height / 2, 0.002);
+        this.screenCorner.position.set(width / 2, -height / 2, relief + 0.002);
+    }
+
+    // How far along the laser a hit is. The AI depth's relief moves the picture off the plane
+    // the laser is tested against, so for the screen this follows the ray to the relief's
+    // height at the hit (a second step, from where the first landed, is close enough).
+    hitDistance(hit) {
+        const depth = this.player.depth;
+        if (this.player.projection !== 'FLAT_AI' || !depth || !this.player.meshes.includes(hit.object) || !hit.uv) {
+            return hit.distance;
+        }
+        const screen = this.player.screen;
+        const ray = this.raycaster.ray;
+        const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(screen.getWorldQuaternion(this.quaternion));
+        const facing = -ray.direction.dot(normal);
+        if (facing < 0.1) return hit.distance; // nearly edge on
+        const { width, height } = this.screenSize();
+        const point = new THREE.Vector3();
+        let uv = hit.uv;
+        let distance = hit.distance;
+        for (let step = 0; step < 2; step++) {
+            const relief = (depth.depthAt(uv) - 0.5) * this.player.depthStrength.value * screen.scale.x;
+            distance = hit.distance - relief / facing;
+            const local = screen.worldToLocal(ray.at(distance, point));
+            uv = { x: local.x / width + 0.5, y: local.y / height + 0.5 };
+        }
+        return distance;
     }
 
     screenSize() {
@@ -335,7 +363,7 @@ export class VRControls {
         if (data.resizing) this.resize(data.resizing, delta);
         const hit = data.held || data.resizing ? null : this.raycaster.intersectObjects(this.targets(), true)[0];
         data.hover = hit ? { object: this.hitTarget(hit.object), hit } : null;
-        const length = hit ? hit.distance : LASER_LENGTH;
+        const length = hit ? this.hitDistance(hit) : LASER_LENGTH;
         // hide the laser pointer in 360°/180°-view when hiding the panel; keep the pointer active at all times in Flatscreen
         const isPointerVisible = this.player.isFlat || this.panel.visible || !!data.held || !!data.resizing;
         const fade = this.stillFade(controller, gamepad, delta);
