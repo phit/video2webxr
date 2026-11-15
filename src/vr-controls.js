@@ -172,6 +172,24 @@ function laserMesh() {
     );
 }
 
+// The orb at a controller: a small solid core in a faint halo, in the HUD's blue
+const ORB_LOOK_RADIANS = THREE.MathUtils.degToRad(30); // shows when looked at within this
+function orbMesh() {
+    const orb = new THREE.Group();
+    for (const [radius, opacity] of [
+        [0.012, 0.9],
+        [0.03, 0.25],
+    ]) {
+        const part = new THREE.Mesh(
+            new THREE.SphereGeometry(radius, 16, 12),
+            new THREE.MeshBasicMaterial({ color: THEME.accent, transparent: true, opacity, depthWrite: false }),
+        );
+        part.userData.opacity = opacity;
+        orb.add(part);
+    }
+    return orb;
+}
+
 export function formatTime(seconds) {
     if (!Number.isFinite(seconds)) return '--:--';
     const s = Math.floor(seconds % 60)
@@ -248,11 +266,19 @@ export class VRControls {
         const pointer = new THREE.Group();
         pointer.add(laser, dot);
         this.player.scene.add(pointer);
+        // the orb where the controller is held, see updateOrb()
+        const grip = this.renderer.xr.getControllerGrip(index);
+        const orb = orbMesh();
+        grip.add(orb);
+        this.player.scene.add(grip);
         controller.userData = {
             laser,
             dot,
             pointer,
             pointerReady: false, // snaps to the controller on its first pose
+            grip,
+            orb,
+            lookedAt: 0, // 0-1, how much the orb shows because the viewer looks its way
             hover: null, // { object: panel, screen or handle, hit }
             held: null, // what the controller carries
             heldByTrigger: false, // carried by a bar (trigger) rather than the grip
@@ -393,6 +419,7 @@ export class VRControls {
         // on 360° and 180° videos the laser hides with the panel; on the flat screen it stays
         const isPointerVisible = this.player.isFlat || this.panel.visible || !!data.held || !!data.resizing;
         const fade = this.stillFade(controller, gamepad, delta);
+        this.updateOrb(data, fade, delta);
         data.laser.visible = isPointerVisible && fade > 0;
         data.laser.material.opacity = LASER_OPACITY * fade;
         data.laser.scale.setScalar(length);
@@ -430,6 +457,24 @@ export class VRControls {
         const ray = this.raycaster.ray;
         ray.origin.setFromMatrixPosition(pointer.matrixWorld);
         ray.direction.set(0, 0, -1).transformDirection(pointer.matrixWorld);
+    }
+
+    // The orb shows where the controller is: with the laser while it's in use, and once it's
+    // been put down (its laser faded), whenever the viewer looks roughly its way, so it can be
+    // found again
+    updateOrb(data, fade, delta) {
+        const { grip, orb } = data;
+        let lookTarget = 0;
+        if (grip.visible) {
+            const { position, direction } = this.headPose();
+            const toOrb = grip.getWorldPosition(new THREE.Vector3()).sub(position);
+            lookTarget = toOrb.angleTo(direction) < ORB_LOOK_RADIANS ? 1 : 0;
+        }
+        const step = delta / FADE_SECONDS;
+        data.lookedAt = THREE.MathUtils.clamp(data.lookedAt + (lookTarget ? step : -step), 0, 1);
+        const shown = Math.max(fade, data.lookedAt);
+        orb.visible = grip.visible && shown > 0;
+        for (const part of orb.children) part.material.opacity = part.userData.opacity * shown;
     }
 
     // How visible the controller's laser is, 0-1: fading out once the controller has been still
@@ -1007,6 +1052,13 @@ export class VRControls {
                 child.geometry.dispose();
                 child.material.dispose();
                 pointer.remove(child);
+            }
+            const { grip, orb } = controller.userData;
+            this.player.scene.remove(grip);
+            grip.remove(orb);
+            for (const part of orb.children) {
+                part.geometry.dispose();
+                part.material.dispose();
             }
         }
         for (const handle of this.handles) {
