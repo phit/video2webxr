@@ -81,6 +81,8 @@ Open them from the gear in the popup, or from the extension's details page:
 
 Changes apply at once, also while in VR.
 
+![The settings: default projections, the remembered sites, the controllers' colours, laser fade-out and orb](docs/screenshots/settings.jpg)
+
 ### Videos to try
 
 | Video | Where | Projection |
