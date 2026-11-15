@@ -7,6 +7,7 @@ import * as esbuild from 'esbuild';
 
 const watch = process.argv.includes('--watch');
 const outdir = 'dist';
+const debugLogs = watch || !!process.env.DEBUG; // see src/log.js
 
 // Files the extension loads as-is
 const STATIC_FILES = [
@@ -52,6 +53,8 @@ const context = await esbuild.context({
     format: 'iife',
     target: 'chrome120',
     loader: { '.svg': 'text' },
+    // debug logging, see src/log.js
+    define: { DEBUG: String(debugLogs) },
     minify: !watch,
     sourcemap: watch ? 'inline' : false,
     legalComments: 'eof', // keeps three.js' license header in the bundles

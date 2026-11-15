@@ -1,5 +1,6 @@
 import cardboardSvg from '../icons/cardboard.svg';
 import { armClick } from './click-to-enter.js';
+import { debug } from './log.js';
 import { detectStereo } from './stereo.js';
 import { VRPlayer } from './vr-player.js';
 
@@ -62,7 +63,7 @@ function playerInfo() {
 // "MESH" on desktop; VR180 ones are marked partialSpherical.
 function detectProjection() {
     const info = playerInfo();
-    console.log('video2webxr: YouTube player info', info);
+    debug('YouTube player info', info);
     if (!info) return 'EAC';
     const is180 = info.partialSpherical;
     if (info.projections.includes('MESH')) return is180 ? '180' : 'EAC';
@@ -76,7 +77,6 @@ function detectProjection() {
 // the detection
 function EnableVRVideo(ytPlayer, picked) {
     const videoElement = ytPlayer.querySelector('video');
-    console.log(`enabling VR on ${videoElement}`);
 
     // remove the webgl viewer of the 360 video
     const webgl = ytPlayer.querySelector('.webgl');
@@ -112,7 +112,6 @@ function EnableVRVideo(ytPlayer, picked) {
 // the cardboard icon can then enable VR again on the next video
 document.addEventListener('yt-navigate-start', () => {
     if (!player) return;
-    console.log('disabling VR');
     disarm?.();
     disarm = null;
     player.dispose();

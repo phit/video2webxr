@@ -1,5 +1,6 @@
 import * as ort from 'onnxruntime-web/webgpu';
 import * as THREE from 'three';
+import { debug } from './log.js';
 import { MODEL, MODEL_PORT } from './model.js';
 
 // Estimates depth for video frames with Depth Anything V2 Small on WebGPU. The runtime's WASM
@@ -62,8 +63,8 @@ export class DepthEstimator {
         const model = await loadModel(onProgress);
         const started = performance.now();
         this.session = await ort.InferenceSession.create(model, { executionProviders: ['webgpu'] });
-        console.log(
-            `video2webxr: depth model loaded in ${Math.round(performance.now() - started)} ms;`,
+        debug(
+            `depth model loaded in ${Math.round(performance.now() - started)} ms;`,
             'inputs',
             this.session.inputNames,
             'outputs',

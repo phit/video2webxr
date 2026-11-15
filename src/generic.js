@@ -1,4 +1,5 @@
 import { armClick, showMessage } from './click-to-enter.js';
+import { debug } from './log.js';
 import { DEFAULT_PROJECTION, enterVRError } from './projections.js';
 import { detectStereo } from './stereo.js';
 import { VRPlayer } from './vr-player.js';
@@ -150,11 +151,11 @@ function createController() {
         const vrPlayer = player;
         detectStereo(vrPlayer, { isCurrent: () => player === vrPlayer });
         state = 'starting';
-        console.log('video2webxr: entering VR');
+        debug('entering VR');
         player
             .enterVR()
             .then((session) => {
-                console.log('video2webxr: in VR');
+                debug('in VR');
                 state = 'active';
                 session.addEventListener('end', stop);
             })

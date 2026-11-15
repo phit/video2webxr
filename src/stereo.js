@@ -1,3 +1,5 @@
+import { debug } from './log.js';
+
 // Tells 3D videos from mono ones by their pixels: a 3D frame holds the two eyes' views next to
 // each other (or above each other), and those are nearly the same picture.
 
@@ -134,7 +136,7 @@ export function detectStereo(
         for (const [split, stereo, shift] of variants) {
             const similarity = halvesCorrelation(vrPlayer.video, split, shift);
             if (similarity === null) continue;
-            console.log(`video2webxr: ${split} halves correlation ${similarity.toFixed(2)}`);
+            debug(`${split} halves correlation ${similarity.toFixed(2)}`);
             vote ??= mono;
             if (similarity > (THRESHOLDS[mono] ?? STEREO_THRESHOLD) && similarity > best) {
                 vote = stereo;
