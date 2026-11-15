@@ -55,17 +55,17 @@ export const PROJECTIONS = {
 };
 
 // Equirectangular sphere (or front hemisphere for 180°), centred on -Z where the viewer faces.
-// The vertical field of view follows the eye's aspect ratio (same angle per pixel both ways),
-// e.g. YouTube serves VR180 as 4:3 frames covering 180° x 135°.
+// 360° always covers 180° vertically, even when squeezed (e.g. 2:1 top/bottom). For 180° the
+// vertical field of view follows the eye's aspect ratio: YouTube's VR180 is 4:3, 180° x 135°.
 const SPHERE_RADIUS = 500;
 function sphereMesh(material, halfSphere, [offsetU, offsetV, scaleU, scaleV], layer) {
     const horizontalFov = halfSphere ? Math.PI : Math.PI * 2;
     const video = material.map.image;
-    const eyeAspect =
-        video.videoWidth && video.videoHeight
-            ? (video.videoWidth * scaleU) / (video.videoHeight * scaleV)
-            : horizontalFov / Math.PI;
-    const verticalFov = Math.min(Math.PI, horizontalFov / eyeAspect);
+    let verticalFov = Math.PI;
+    if (halfSphere && video.videoWidth && video.videoHeight) {
+        const eyeAspect = (video.videoWidth * scaleU) / (video.videoHeight * scaleV);
+        verticalFov = Math.min(Math.PI, horizontalFov / eyeAspect);
+    }
     const geometry = new THREE.SphereGeometry(
         SPHERE_RADIUS,
         60,
