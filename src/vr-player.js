@@ -20,15 +20,22 @@ if (typeof XRWebGLBinding !== 'undefined') {
     delete XRWebGLBinding.prototype.createProjectionLayer;
 }
 
-// AR sessions can show passthrough. Asked when the script loads, because the click that
-// enters VR can't wait for the answer without losing its user activation.
+// AR sessions can show passthrough. The click that enters VR can't wait for the answer without
+// losing its user activation, so it's asked ahead: when a player is made, and by generic.js when
+// it arms a video (its player is only made in the click). Not when the script loads: that would
+// query the VR runtime on every page.
 let arSupported = false;
-navigator.xr
-    ?.isSessionSupported('immersive-ar')
-    .then((supported) => {
-        arSupported = supported;
-    })
-    .catch(() => {});
+let arChecked = false;
+export function checkARSupport() {
+    if (arChecked) return;
+    arChecked = true;
+    navigator.xr
+        ?.isSessionSupported('immersive-ar')
+        .then((supported) => {
+            arSupported = supported;
+        })
+        .catch(() => {});
+}
 
 // The viewer sits behind the centre of a 180° video by one of DISTANCES (see projections.js),
 // remembered per site
@@ -67,6 +74,7 @@ function useMipmaps(texture, on) {
 export class VRPlayer extends EventTarget {
     constructor(video, projection) {
         super();
+        checkARSupport();
         this.video = video;
         this.projection = projection;
         this.meshes = [];

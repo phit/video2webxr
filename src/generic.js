@@ -3,7 +3,7 @@ import { debug } from './log.js';
 import { answerPopup, COMMANDS } from './popup-protocol.js';
 import { DEFAULT_PROJECTION, enterVRError } from './projections.js';
 import { detectStereo } from './stereo.js';
-import { VRPlayer } from './vr-player.js';
+import { checkARSupport, VRPlayer } from './vr-player.js';
 
 // Injected by the popup into the frame with the largest video. The popup sends commands; the
 // page itself gets no controls, so sites with lightboxes or focus traps aren't disturbed.
@@ -187,6 +187,7 @@ function createController() {
             return { state };
         }
         stop();
+        checkARSupport();
         video = largestVideo();
         if (!video) return { error: 'No video found on this page.' };
         const problem = await whyUnusable(video, withHeader);
