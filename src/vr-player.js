@@ -29,6 +29,25 @@ const LEFT_HALF = [0, 0, 0.5, 1],
 const TOP_HALF = [0, 0.5, 1, 0.5],
     BOTTOM_HALF = [0, 0, 1, 0.5];
 
+// Pixels left out at the edge an eye shares with the other, so filtering doesn't blend the other
+// eye's edge in. More than half a pixel, because the flat screen's smaller mipmaps blur wider.
+const EYE_EDGE_PX = 2;
+
+// Maps a geometry's 0-1 uvs onto a texture region of the video, trimmed at the shared edge
+function remapUV(geometry, [offsetU, offsetV, scaleU, scaleV], video) {
+    const trimU = scaleU < 1 && video.videoWidth ? EYE_EDGE_PX / video.videoWidth : 0;
+    const trimV = scaleV < 1 && video.videoHeight ? EYE_EDGE_PX / video.videoHeight : 0;
+    // the shared edge is where a half doesn't touch the frame's border
+    if (offsetU > 0) offsetU += trimU;
+    if (offsetV > 0) offsetV += trimV;
+    scaleU -= trimU;
+    scaleV -= trimV;
+    const uv = geometry.attributes.uv;
+    for (let i = 0; i < uv.count; i++) {
+        uv.setXY(i, offsetU + uv.getX(i) * scaleU, offsetV + uv.getY(i) * scaleV);
+    }
+}
+
 // Each projection builds its meshes from the video material (and the player, for the depth).
 // Stereo projections put one mesh on layer 1 (left eye) and one on layer 2 (right eye);
 // three.js renders those layers to the matching eye in VR.
@@ -58,12 +77,12 @@ export const PROJECTIONS = {
 // 360° always covers 180° vertically, even when squeezed (e.g. 2:1 top/bottom). For 180° the
 // vertical field of view follows the eye's aspect ratio: YouTube's VR180 is 4:3, 180° x 135°.
 const SPHERE_RADIUS = 500;
-function sphereMesh(material, halfSphere, [offsetU, offsetV, scaleU, scaleV], layer) {
+function sphereMesh(material, halfSphere, region, layer) {
     const horizontalFov = halfSphere ? Math.PI : Math.PI * 2;
     const video = material.map.image;
     let verticalFov = Math.PI;
     if (halfSphere && video.videoWidth && video.videoHeight) {
-        const eyeAspect = (video.videoWidth * scaleU) / (video.videoHeight * scaleV);
+        const eyeAspect = (video.videoWidth * region[2]) / (video.videoHeight * region[3]);
         verticalFov = Math.min(Math.PI, horizontalFov / eyeAspect);
     }
     const geometry = new THREE.SphereGeometry(
@@ -76,10 +95,7 @@ function sphereMesh(material, halfSphere, [offsetU, offsetV, scaleU, scaleV], la
         verticalFov,
     );
     geometry.scale(-1, 1, 1); // Invert the geometry to match equirectangular projection
-    const uv = geometry.attributes.uv;
-    for (let i = 0; i < uv.count; i++) {
-        uv.setXY(i, offsetU + uv.getX(i) * scaleU, offsetV + uv.getY(i) * scaleV);
-    }
+    remapUV(geometry, region, video);
     const mesh = new THREE.Mesh(geometry, material);
     if (layer) mesh.layers.set(layer);
     return mesh;
@@ -235,12 +251,9 @@ function flatStereoMeshes(material, split) {
     if (split === 'LR' && frameAspect >= FULL_SBS_ASPECT) aspect = frameAspect / 2;
     if (split === 'TB' && frameAspect <= FULL_TB_ASPECT) aspect = frameAspect * 2;
     const halves = split === 'LR' ? [LEFT_HALF, RIGHT_HALF] : [TOP_HALF, BOTTOM_HALF];
-    return halves.map(([offsetU, offsetV, scaleU, scaleV], eye) => {
+    return halves.map((region, eye) => {
         const geometry = new THREE.PlaneGeometry(2 * aspect, 2);
-        const uv = geometry.attributes.uv;
-        for (let i = 0; i < uv.count; i++) {
-            uv.setXY(i, offsetU + uv.getX(i) * scaleU, offsetV + uv.getY(i) * scaleV);
-        }
+        remapUV(geometry, region, video);
         const mesh = new THREE.Mesh(geometry, material);
         mesh.layers.set(eye + 1);
         return mesh;
