@@ -5,62 +5,38 @@ import { VRPlayer } from './vr-player.js';
 
 let player = null;
 
-// Function to be executed when the cardboard icon is clicked
 function handleCardboardIconClick(event) {
-    console.log('clicked cardboard button');
-    if (player) {
-        console.log('VR already enabled, ignoring click');
-        return;
-    }
+    if (player) return; // already on
     EnableVRVideo(event.currentTarget.closest('.html5-video-player'));
 }
 
-// Function to add the cardboard icon to a video element
-function addCardboardIconToVideo() {
-    // Check if the img has already been added
-    const iconCheck = document.querySelector('#movie_player #cardboardimg');
-    if (iconCheck) {
-        return;
-    }
-    // Create a new <img> element for the cardboard icon
-    const iconImg = document.createElement('img');
-    iconImg.src = `data:image/svg+xml,${encodeURIComponent(cardboardSvg)}`;
-    iconImg.style.padding = '12px';
-    iconImg.style.boxSizing = 'border-box';
-    iconImg.id = 'cardboardimg';
-    iconImg.className = 'ytp-button';
-
-    // Attach the onclick event to the cardboard icon
-    iconImg.onclick = handleCardboardIconClick;
-
-    // the main player, not the home page's hover previews
-    const rightControls = document.querySelector('#movie_player .ytp-right-controls');
-    if (rightControls) {
-        // Append the image to the div element
-        rightControls.appendChild(iconImg);
-    }
+function createCardboardIcon() {
+    const icon = document.createElement('img');
+    icon.src = `data:image/svg+xml,${encodeURIComponent(cardboardSvg)}`;
+    icon.style.padding = '12px';
+    icon.style.boxSizing = 'border-box';
+    icon.id = 'cardboardimg';
+    icon.className = 'ytp-button';
+    icon.onclick = handleCardboardIconClick;
+    return icon;
 }
 
-// Create a MutationObserver to watch for new video elements
-const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((addedNode) => {
-            // Check if the added node is a video element
-            if (addedNode instanceof HTMLVideoElement) {
-                addCardboardIconToVideo(addedNode);
-            }
-        });
-    });
-});
-
-// Attach the cardboard icon to each video element
-const videoElements = document.querySelectorAll('video');
-videoElements.forEach((video) => {
-    addCardboardIconToVideo(video);
-});
-
-// Start observing the entire document for changes
-observer.observe(document, { childList: true, subtree: true });
+// Puts the icon in the main player's controls (not the home page's hover previews). YouTube
+// builds the player late, so the whole page is watched until the controls exist; after that
+// only the controls, in case YouTube rebuilds them.
+const observer = new MutationObserver(addCardboardIcon);
+let watched = null;
+function addCardboardIcon() {
+    const controls = document.querySelector('#movie_player .ytp-right-controls');
+    if (controls && !controls.querySelector('#cardboardimg')) controls.appendChild(createCardboardIcon());
+    const target = controls ?? document;
+    if (target === watched) return;
+    observer.disconnect();
+    observer.observe(target, { childList: true, subtree: !controls });
+    watched = target;
+}
+addCardboardIcon();
+document.addEventListener('yt-navigate-finish', addCardboardIcon);
 
 // Asks youtube-page.js, which can reach YouTube's player, for the video's projection data.
 // DOM events are dispatched synchronously, so the answer is there when dispatchEvent returns.
