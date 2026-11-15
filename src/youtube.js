@@ -1,10 +1,12 @@
 import cardboardSvg from '../icons/cardboard.svg';
 import { armClick } from './click-to-enter.js';
 import { debug } from './log.js';
+import { createPageControls } from './page-controls.js';
 import { detectStereo } from './stereo.js';
 import { VRPlayer } from './vr-player.js';
 
 let player = null;
+let pageControls = null; // below the video while VR is enabled
 
 function handleCardboardIconClick(event) {
     if (player) return; // already on
@@ -98,9 +100,9 @@ function enableVRVideo(ytPlayer, picked) {
             skip: () => !!ytPlayer.classList.contains('ad-showing'),
         });
 
-    // the Enter VR button and projection dropdown, below the video; YouTube's own notices there
-    // stay (dispose() removes the controls again)
-    ytPlayer.closest('ytd-watch-flexy')?.querySelector('#alerts')?.appendChild(player.createControls());
+    // the Enter VR button and projection dropdown, below the video, next to YouTube's own notices
+    pageControls = createPageControls(player);
+    ytPlayer.closest('ytd-watch-flexy')?.querySelector('#alerts')?.appendChild(pageControls);
 }
 
 // YouTube switches videos without a page load, so tear everything down when it navigates;
@@ -109,6 +111,8 @@ document.addEventListener('yt-navigate-start', () => {
     if (!player) return;
     disarm?.();
     disarm = null;
+    pageControls?.remove();
+    pageControls = null;
     player.dispose();
     player = null;
 });
