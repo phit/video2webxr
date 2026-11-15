@@ -12,6 +12,16 @@ if (typeof XRWebGLBinding !== 'undefined') {
     delete XRWebGLBinding.prototype.createProjectionLayer;
 }
 
+// AR sessions can show passthrough. Asked when the script loads, because the click that
+// enters VR can't wait for the answer without losing its user activation.
+let arSupported = false;
+navigator.xr
+    ?.isSessionSupported('immersive-ar')
+    .then((supported) => {
+        arSupported = supported;
+    })
+    .catch(() => {});
+
 // Texture regions for each eye: [offsetU, offsetV, scaleU, scaleV]
 const FULL_FRAME = [0, 0, 1, 1];
 const LEFT_HALF = [0, 0, 0.5, 1],
@@ -313,15 +323,6 @@ export class VRPlayer {
         // render loop clears the frame itself (see render()), opaque dark grey normally and
         // transparent for passthrough, because three.js would always clear to transparent there.
         this.passthrough = false;
-        // AR sessions can show the headset's passthrough; asked early, so entering VR doesn't
-        // have to wait for the answer and lose the click's user activation
-        this.arSupported = false;
-        navigator.xr
-            ?.isSessionSupported('immersive-ar')
-            .then((supported) => {
-                this.arSupported = supported;
-            })
-            .catch(() => {});
         // "Flat screen 3D (AI)" needs depth estimation on the GPU; it's offered once that's known
         // to work. The depth source is made when first needed and kept, so switching back and
         // forth doesn't reload the model.
@@ -386,7 +387,7 @@ export class VRPlayer {
     // so call it synchronously from a click handler. Where the browser supports AR, the
     // session is an AR one, which looks the same until passthrough is turned on.
     async enterVR() {
-        const mode = this.arSupported ? 'immersive-ar' : 'immersive-vr';
+        const mode = arSupported ? 'immersive-ar' : 'immersive-vr';
         const session = await navigator.xr.requestSession(mode, {
             optionalFeatures: ['local-floor', 'bounded-floor'],
         });
