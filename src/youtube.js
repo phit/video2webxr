@@ -98,14 +98,9 @@ function EnableVRVideo(ytPlayer, picked) {
             skip: () => !!ytPlayer.classList.contains('ad-showing'),
         });
 
-    // clean alerts box and add VR button
-    const alertsbox = ytPlayer.closest('ytd-watch-flexy')?.querySelector('#alerts');
-    if (alertsbox) {
-        if (alertsbox.firstChild) {
-            alertsbox.removeChild(alertsbox.firstChild);
-        }
-        alertsbox.appendChild(player.createControls());
-    }
+    // the Enter VR button and projection dropdown, below the video; YouTube's own notices there
+    // stay (dispose() removes the controls again)
+    ytPlayer.closest('ytd-watch-flexy')?.querySelector('#alerts')?.appendChild(player.createControls());
 }
 
 // YouTube switches videos without a page load, so tear everything down when it navigates;
