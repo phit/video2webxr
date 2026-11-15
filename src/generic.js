@@ -28,19 +28,16 @@ function largestVideo() {
     return findVideos().sort((a, b) => area(b) - area(a))[0];
 }
 
+// Resolves on the video's next event, rejects on an error or after timeout ms; either way
+// both listeners go
 function waitFor(video, event, timeout) {
+    const done = new AbortController();
     return new Promise((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error(`no ${event}`)), timeout);
-        video.addEventListener(
-            event,
-            () => {
-                clearTimeout(timer);
-                resolve();
-            },
-            { once: true },
-        );
-        video.addEventListener('error', () => reject(new Error('video error')), { once: true });
-    });
+        video.addEventListener(event, resolve, { signal: done.signal });
+        video.addEventListener('error', () => reject(new Error('video error')), { signal: done.signal });
+        done.signal.addEventListener('abort', () => clearTimeout(timer));
+    }).finally(() => done.abort());
 }
 
 // WebGL can only use video frames the page is allowed to read
