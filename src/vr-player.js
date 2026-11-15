@@ -188,9 +188,13 @@ export class VRPlayer extends EventTarget {
         this.dispatchEvent(new Event('vrerror'));
     }
 
-    // Whether the current session can show the room around the video
+    // Whether the room can show around the video: the session can do it, and the video leaves
+    // room for it (the flat screen, or 180°; a full 360° sphere surrounds the viewer)
     get passthroughAvailable() {
-        return this.renderer.xr.isPresenting && this.renderer.xr.getEnvironmentBlendMode() === 'alpha-blend';
+        const leavesRoom = this.isFlat || this.isHemisphere;
+        return (
+            leavesRoom && this.renderer.xr.isPresenting && this.renderer.xr.getEnvironmentBlendMode() === 'alpha-blend'
+        );
     }
 
     setPassthrough(on) {
