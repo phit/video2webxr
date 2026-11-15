@@ -6,7 +6,7 @@ A Chromium extension that plays web videos in your PC VR headset through WebXR, 
 - **Other sites:** any non-DRM video, via the extension's toolbar button
 - **In VR:** a controls panel styled after the Steam Frame, and a flat screen you can move and resize with your controllers
 
-![A 3D 360° YouTube video in the headset, with the browser floating in SteamVR](docs/screenshots/headset-eac-3d.jpg)
+![A 3D 360° YouTube video in the headset, with the controls panel and a controller's laser](docs/screenshots/headset-eac-3d.jpg)
 
 ### Install
 
@@ -56,7 +56,7 @@ The page itself gets no extra controls, so video lightboxes and overlays keep wo
 
 A controls panel floats below the video: play/pause, the seek bar, skip 10 seconds back or forward, mute and volume, the projection (‹ › to switch), distance for 180° videos, passthrough, Recenter and Exit VR.
 
-![The controls panel below a flat screen video in the headset, with passthrough showing the room around it](docs/screenshots/headset-controls-passthrough.jpg)
+![The controls panel below a flat screen video in the headset, with passthrough showing the room around it and the orb on a controller put down](docs/screenshots/headset-controls-passthrough.jpg)
 
 | To | Do this |
 |---|---|
