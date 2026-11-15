@@ -1,5 +1,6 @@
 import * as ort from 'onnxruntime-web/webgpu';
 import * as THREE from 'three';
+import { t } from './i18n.js';
 import { debug } from './log.js';
 import { MODEL, MODEL_PORT } from './model.js';
 
@@ -157,9 +158,9 @@ export class DepthSource {
     // One download and start-up, however often start() is called meanwhile
     async load() {
         const estimator = new DepthEstimator();
-        this.status = 'Starting…';
+        this.status = t('depthStarting');
         await estimator.load((progress) => {
-            this.status = progress < 1 ? `Downloading ${Math.floor(progress * 100)}%` : 'Starting…';
+            this.status = progress < 1 ? t('depthDownloading', Math.floor(progress * 100)) : t('depthStarting');
         });
         this.status = '';
         if (this.disposed) estimator.dispose();
@@ -204,7 +205,7 @@ export class DepthSource {
             if (this.disposed) return;
             // stays flat
             console.warn('video2webxr: depth estimation failed:', e);
-            this.status = 'Unavailable';
+            this.status = t('depthUnavailable');
             this.failed = true;
             this.running = false;
         }

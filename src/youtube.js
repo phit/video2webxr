@@ -1,5 +1,6 @@
 import cardboardSvg from '../icons/cardboard.svg';
 import { armClick } from './click-to-enter.js';
+import { t } from './i18n.js';
 import { debug } from './log.js';
 import { createPageControls } from './page-controls.js';
 import { answerPopup, COMMANDS } from './popup-protocol.js';
@@ -20,8 +21,8 @@ function createCardboardIcon() {
     const button = document.createElement('button');
     button.id = 'cardboardimg';
     button.className = 'ytp-button';
-    button.title = 'Watch in VR';
-    button.setAttribute('aria-label', 'Watch in VR');
+    button.title = t('watchInVR');
+    button.setAttribute('aria-label', t('watchInVR'));
     button.style.padding = '12px';
     button.style.boxSizing = 'border-box';
     const image = document.createElement('img');
@@ -131,7 +132,7 @@ function popupState() {
 function arm(picked) {
     if (!player) {
         const ytPlayer = document.querySelector('#movie_player');
-        if (!ytPlayer?.querySelector('video')) return { error: 'No video found on this page.' };
+        if (!ytPlayer?.querySelector('video')) return { error: t('noVideo') };
         enableVRVideo(ytPlayer, picked);
     } else if (picked) {
         player.setProjection(picked);

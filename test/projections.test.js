@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { enterVRError, youtubeProjection } from '../src/projections.js';
+import { installChromeI18n } from './chrome-i18n.js';
+
+installChromeI18n();
 
 test('youtubeProjection maps YouTube player info to a projection', () => {
     const info = (projections, partialSpherical = false) => ({ projections, partialSpherical });

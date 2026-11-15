@@ -1,6 +1,7 @@
 import * as THREE from 'three';
+import { t } from './i18n.js';
 import { forwardFromYaw } from './meshes.js';
-import { DEPTH_STRENGTHS, DISTANCES, PROJECTION_LABELS } from './projections.js';
+import { DEPTH_STRENGTHS, DISTANCES, projectionLabel } from './projections.js';
 
 // In-VR controls: a laser from each controller, a panel with the video's controls, and
 // moving things around like in the Steam Frame's UI. Point the laser and pull the trigger to
@@ -807,14 +808,14 @@ export class VRControls {
             value,
             x,
             y,
-            { size = 28, color = THEME.text, align = 'center', weight = 500, spacing = 0 } = {},
+            { size = 28, color = THEME.text, align = 'center', weight = 500, spacing = 0, maxWidth } = {},
         ) => {
             c.font = `${weight} ${size}px ${THEME.font}`;
             c.letterSpacing = `${spacing}px`;
             c.textAlign = align;
             c.textBaseline = 'middle';
             c.fillStyle = color;
-            c.fillText(value, x, y);
+            c.fillText(value, x, y, maxWidth);
             c.letterSpacing = '0px';
         };
         // focused control: lighter background with a short blue line centred at the bottom
@@ -938,15 +939,20 @@ export class VRControls {
         iconButton('previousProjection', () => text('‹', 0, -3, { size: 52, weight: 400 }));
         iconButton('nextProjection', () => text('›', 0, -3, { size: 52, weight: 400 }));
         // while the AI depth downloads or starts, that instead of the name
-        const label =
-            this.player.depthStatus || (PROJECTION_LABELS.find(([id]) => id === this.player.projection)?.[1] ?? '');
+        const label = this.player.depthStatus || projectionLabel(this.player.projection);
         const labelX = (areas.previousProjection.x + areas.previousProjection.w + areas.nextProjection.x) / 2;
-        text('PROJECTION', labelX, ROW_BOTTOM + 26, { size: 18, color: THEME.label, weight: 600, spacing: 2 });
-        // smaller type when the name doesn't fit between the arrows
         const labelRoom = areas.nextProjection.x - (areas.previousProjection.x + areas.previousProjection.w) - 8;
+        text(t('projection').toLocaleUpperCase(), labelX, ROW_BOTTOM + 26, {
+            size: 18,
+            color: THEME.label,
+            weight: 600,
+            spacing: 2,
+            maxWidth: labelRoom,
+        });
         c.font = `500 24px ${THEME.font}`;
         const labelSize = Math.max(16, Math.min(24, Math.floor((24 * labelRoom) / c.measureText(label).width)));
-        text(label, labelX, ROW_BOTTOM + 60, { size: labelSize });
+        // smaller type when the name doesn't fit between the arrows, squeezed below 16 px
+        text(label, labelX, ROW_BOTTOM + 60, { size: labelSize, maxWidth: labelRoom });
 
         // how far back from a 180° video you sit: "DISTANCE" over a bar per step (none lit: in
         // the centre)
@@ -955,7 +961,7 @@ export class VRControls {
             iconButton(
                 'distance',
                 () => {
-                    text('DISTANCE', 0, -12, { size: 15, weight: 700 });
+                    text(t('distance').toLocaleUpperCase(), 0, -12, { size: 15, weight: 700, maxWidth: BUTTON - 12 });
                     for (let bar = 1; bar < DISTANCES.length; bar++) {
                         roundRect(-38 + bar * 16, 10, 12, 8, 2, bar <= level ? THEME.accent : THEME.track);
                     }

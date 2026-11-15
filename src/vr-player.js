@@ -7,7 +7,7 @@ import {
     depthSupported,
     enterVRError,
     FLAT_PROJECTIONS,
-    PROJECTION_LABELS,
+    PROJECTION_IDS,
 } from './projections.js';
 import { VRControls } from './vr-controls.js';
 
@@ -255,7 +255,7 @@ export class VRPlayer extends EventTarget {
 
     // The projections this browser can show, in dropdown order
     get projectionIds() {
-        return PROJECTION_LABELS.map(([id]) => id).filter((id) => id !== 'FLAT_AI' || this.depthSupported);
+        return PROJECTION_IDS.filter((id) => id !== 'FLAT_AI' || this.depthSupported);
     }
 
     // Puts the viewer the distance setting plus however far they stepped back behind the

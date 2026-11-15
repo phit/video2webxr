@@ -1,0 +1,188 @@
+{
+    "extDescription": {
+        "message": "Watch YouTube 360°/VR180 videos and videos on other sites in your PC VR headset via WebXR"
+    },
+    "actionTitle": {
+        "message": "Watch this video in VR"
+    },
+    "watchInVR": {
+        "message": "Watch in VR"
+    },
+    "lookingForVideo": {
+        "message": "Looking for a video…"
+    },
+    "allowRetry": {
+        "message": "Allow and retry"
+    },
+    "allowAllRetry": {
+        "message": "Allow on all sites and retry"
+    },
+    "projection": {
+        "message": "Projection"
+    },
+    "projectionTitle": {
+        "message": "Video projection"
+    },
+    "enterVR": {
+        "message": "Enter VR"
+    },
+    "exitVR": {
+        "message": "Exit VR"
+    },
+    "vrNotSupported": {
+        "message": "VR not supported"
+    },
+    "stop": {
+        "message": "Stop"
+    },
+    "statusArmed": {
+        "message": "Click the video in the page to enter VR."
+    },
+    "statusStarting": {
+        "message": "Starting VR… check that SteamVR is running and no other browser is in VR."
+    },
+    "statusActive": {
+        "message": "In VR. Changing the projection applies right away."
+    },
+    "accessDenied": {
+        "message": "Without that access the video can't be read, so it can't be shown in VR."
+    },
+    "corsRedirect": {
+        "message": "$HOST$ passes the video on to another server, which video2webxr can't know in advance, so it still can't be read. It can work around this if you allow it on all sites; it still only changes video responses in this tab.",
+        "placeholders": {
+            "host": {
+                "content": "$1"
+            }
+        }
+    },
+    "corsOffer": {
+        "message": "$ERROR$ video2webxr can work around this if you allow it to access $HOST$.",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            },
+            "host": {
+                "content": "$2"
+            }
+        }
+    },
+    "corsGranted": {
+        "message": "$ERROR$ Click Enter VR to work around it.",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "couldntStart": {
+        "message": "Couldn't start: $MESSAGE$",
+        "placeholders": {
+            "message": {
+                "content": "$1"
+            }
+        }
+    },
+    "stopped": {
+        "message": "Stopped."
+    },
+    "openYouTubeVideo": {
+        "message": "Open a video on YouTube to watch it in VR."
+    },
+    "pageInaccessible": {
+        "message": "This page can't be accessed by extensions."
+    },
+    "noVideo": {
+        "message": "No video found on this page."
+    },
+    "videoFound": {
+        "message": "Video found. Enter VR, then click the video in the page."
+    },
+    "detectAutomatically": {
+        "message": "Detect automatically"
+    },
+    "reloadPage": {
+        "message": "Reload the page to use video2webxr on it."
+    },
+    "youtubeHint": {
+        "message": "Enter VR, then click the video. You can also use the cardboard icon in the player."
+    },
+    "corsBlocked": {
+        "message": "This site serves the video from another domain without allowing it to be read (CORS), so it can't be shown in VR."
+    },
+    "corsStillBlocked": {
+        "message": "The video's server still refused to let it be read, so it can't be shown in VR."
+    },
+    "drmProtected": {
+        "message": "This video is DRM-protected, so the browser won't let it be shown in VR."
+    },
+    "cantReadYet": {
+        "message": "This video can't be read yet. Open video2webxr's popup to fix it."
+    },
+    "clickToEnter": {
+        "message": "Click the video to enter VR"
+    },
+    "runtimeRefused": {
+        "message": "The VR runtime couldn't start a session. Another browser or app may be using the headset: close it, or restart SteamVR, and try again."
+    },
+    "enterFailed": {
+        "message": "Entering VR failed: $MESSAGE$",
+        "placeholders": {
+            "message": {
+                "content": "$1"
+            }
+        }
+    },
+    "depthStarting": {
+        "message": "Starting…"
+    },
+    "depthDownloading": {
+        "message": "Downloading $PERCENT$%",
+        "placeholders": {
+            "percent": {
+                "content": "$1"
+            }
+        }
+    },
+    "depthUnavailable": {
+        "message": "Unavailable"
+    },
+    "distance": {
+        "message": "Distance"
+    },
+    "projection_EAC": {
+        "message": "360° EAC"
+    },
+    "projection_EAC_LR": {
+        "message": "360° EAC 3D"
+    },
+    "projection_CUBE": {
+        "message": "360° cubemap"
+    },
+    "projection_360": {
+        "message": "360° equirectangular"
+    },
+    "projection_360_TB": {
+        "message": "360° 3D top/bottom"
+    },
+    "projection_360_LR": {
+        "message": "360° 3D side by side"
+    },
+    "projection_180": {
+        "message": "180°"
+    },
+    "projection_180_LR": {
+        "message": "180° 3D side by side"
+    },
+    "projection_FLAT": {
+        "message": "Flat screen"
+    },
+    "projection_FLAT_LR": {
+        "message": "Flat screen 3D side by side"
+    },
+    "projection_FLAT_TB": {
+        "message": "Flat screen 3D top/bottom"
+    },
+    "projection_FLAT_AI": {
+        "message": "Flat screen 3D (AI)"
+    }
+}

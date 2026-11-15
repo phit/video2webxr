@@ -1,4 +1,5 @@
 import { armClick, showMessage } from './click-to-enter.js';
+import { t } from './i18n.js';
 import { debug } from './log.js';
 import { answerPopup, COMMANDS } from './popup-protocol.js';
 import { DEFAULT_PROJECTION, enterVRError } from './projections.js';
@@ -10,9 +11,8 @@ import { checkARSupport, VRPlayer } from './vr-player.js';
 // Chrome only starts a VR session from a user gesture in the page, so "arm" waits for the next
 // click on the video and enters VR from there.
 
-const NOT_READABLE_CORS =
-    "This site serves the video from another domain without allowing it to be read (CORS), so it can't be shown in VR.";
-const NOT_READABLE_EVEN_ALLOWED = "The video's server still refused to let it be read, so it can't be shown in VR.";
+const NOT_READABLE_CORS = t('corsBlocked');
+const NOT_READABLE_EVEN_ALLOWED = t('corsStillBlocked');
 
 function findVideos(root = document) {
     const videos = [...root.querySelectorAll('video')];
@@ -80,7 +80,7 @@ function corsFixable(video) {
 // site's cookies like before.
 async function whyUnusable(video, withHeader = false) {
     if (video.mediaKeys) {
-        return "This video is DRM-protected, so the browser won't let it be shown in VR.";
+        return t('drmProtected');
     }
     if (video.readyState < video.HAVE_CURRENT_DATA) {
         await waitFor(video, 'loadeddata', 5000).catch(() => {});
@@ -124,7 +124,7 @@ function createController() {
         stop();
         lastError = NOT_READABLE_CORS;
         lastCors = corsFixable(blockedVideo);
-        showMessage(blockedVideo, "This video can't be read yet. Open video2webxr's popup to fix it.");
+        showMessage(blockedVideo, t('cantReadYet'));
     }
 
     function startVR() {
@@ -189,7 +189,7 @@ function createController() {
         stop();
         checkARSupport();
         video = largestVideo();
-        if (!video) return { error: 'No video found on this page.' };
+        if (!video) return { error: t('noVideo') };
         const problem = await whyUnusable(video, withHeader);
         if (problem === NOT_READABLE_CORS || problem === NOT_READABLE_EVEN_ALLOWED)
             return { error: problem, cors: corsFixable(video) };

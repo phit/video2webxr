@@ -3,6 +3,8 @@
 // waits for the next click on the video, keeps every event of that click from the site (or it
 // may pause the video, close its lightbox or start a drag) and calls onClick from it.
 
+import { t } from './i18n.js';
+
 // All events of the click that enters VR
 const GESTURE_EVENTS = ['pointerdown', 'mousedown', 'touchstart', 'pointerup', 'mouseup', 'touchend', 'click'];
 
@@ -14,7 +16,7 @@ function activatesUser(event) {
 }
 
 // Shows a hint over the video and waits for the click. Returns a function that stops waiting.
-export function armClick(video, onClick, hintText = 'Click the video to enter VR') {
+export function armClick(video, onClick, hintText = t('clickToEnter')) {
     let gestureStarted = false;
     let called = false;
     let gestureTimeout = null;

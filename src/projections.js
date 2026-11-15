@@ -1,19 +1,24 @@
-// Projection ids and labels, in dropdown order. Kept free of three.js so the popup can use it.
-export const PROJECTION_LABELS = [
-    ['EAC', '360° EAC'],
-    ['EAC_LR', '360° EAC 3D'],
-    ['CUBE', '360° cubemap'],
-    ['360', '360° equirectangular'],
-    ['360_TB', '360° 3D top/bottom'],
-    ['360_LR', '360° 3D side by side'],
-    ['180', '180°'],
-    ['180_LR', '180° 3D side by side'],
-    ['FLAT', 'Flat screen'],
-    ['FLAT_LR', 'Flat screen 3D side by side'],
-    ['FLAT_TB', 'Flat screen 3D top/bottom'],
-    // only offered where depth estimation runs, see depthSupported()
-    ['FLAT_AI', 'Flat screen 3D (AI)'],
+import { t } from './i18n.js';
+
+// Projection ids in dropdown order. Kept free of three.js so the popup can use it.
+export const PROJECTION_IDS = [
+    'EAC',
+    'EAC_LR',
+    'CUBE',
+    '360',
+    '360_TB',
+    '360_LR',
+    '180',
+    '180_LR',
+    'FLAT',
+    'FLAT_LR',
+    'FLAT_TB',
+    'FLAT_AI', // only offered where depth estimation runs, see depthSupported()
 ];
+
+export function projectionLabel(id) {
+    return t(`projection_${id}`);
+}
 
 // WebGPU adapter vendors of phone-class GPUs. On the Steam Frame's Adreno the model either
 // loses the GPU (4-bit weights) or takes 50-200 ms a frame (16-bit), too slow to be worth it.
@@ -37,9 +42,7 @@ export const FLAT_PROJECTIONS = new Set(['FLAT', 'FLAT_LR', 'FLAT_TB', 'FLAT_AI'
 // What Chrome reports when SteamVR refuses the session, usually because another browser or app
 // already holds the headset
 export function enterVRError(e) {
-    return e.name === 'NotSupportedError'
-        ? "The VR runtime couldn't start a session. Another browser or app may be using the headset: close it, or restart SteamVR, and try again."
-        : `Entering VR failed: ${e.message}`;
+    return e.name === 'NotSupportedError' ? t('runtimeRefused') : t('enterFailed', e.message);
 }
 
 // Most videos on the web are plain flat videos

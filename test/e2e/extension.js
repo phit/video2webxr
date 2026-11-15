@@ -19,6 +19,7 @@ export const test = base.extend({
                 `--disable-extensions-except=${DIST}`,
                 `--load-extension=${DIST}`,
                 '--autoplay-policy=no-user-gesture-required',
+                '--lang=en-US', // the tests check the English texts
             ],
         });
         await use(context);

@@ -1,6 +1,7 @@
 import { ALL_SITES, corsOrigins, corsRule } from './cors-rule.js';
+import { localizePage, t } from './i18n.js';
 import { COMMANDS } from './popup-protocol.js';
-import { DEFAULT_PROJECTION, depthSupported, PROJECTION_LABELS } from './projections.js';
+import { DEFAULT_PROJECTION, depthSupported, PROJECTION_IDS, projectionLabel } from './projections.js';
 
 // The extension's toolbar popup. Finds the largest video in the tab, injects generic.js into
 // its frame and sends it commands. The page gets no controls of its own.
@@ -26,10 +27,9 @@ function showState(state) {
     target.state = state;
     enterButton.hidden = state !== 'idle' && state !== 'none';
     stopButton.hidden = !enterButton.hidden;
-    if (state === 'armed') setStatus('Click the video in the page to enter VR.');
-    else if (state === 'starting')
-        setStatus('Starting VR… check that SteamVR is running and no other browser is in VR.');
-    else if (state === 'active') setStatus('In VR. Changing the projection applies right away.');
+    if (state === 'armed') setStatus(t('statusArmed'));
+    else if (state === 'starting') setStatus(t('statusStarting'));
+    else if (state === 'active') setStatus(t('statusActive'));
 }
 
 // Runs in each frame of the tab: the area of its largest video and the controller state
@@ -90,7 +90,7 @@ async function allowReading(cors, scope) {
 async function allow() {
     const granted = await chrome.permissions.request({ origins: corsOrigins(blocked, allowScope) }).catch(() => false);
     if (!granted) {
-        setStatus("Without that access the video can't be read, so it can't be shown in VR.", true);
+        setStatus(t('accessDenied'), true);
         return;
     }
     allowButton.hidden = true;
@@ -101,12 +101,10 @@ async function allow() {
 function offerAllow(cors, scope, error) {
     blocked = cors;
     allowScope = scope;
-    allowButton.textContent = scope === 'all' ? 'Allow on all sites and retry' : 'Allow and retry';
+    allowButton.textContent = t(scope === 'all' ? 'allowAllRetry' : 'allowRetry');
     allowButton.hidden = false;
     const host = new URL(cors.src).hostname;
-    return scope === 'all'
-        ? `${host} passes the video on to another server, which video2webxr can't know in advance, so it still can't be read. It can work around this if you allow it on all sites; it still only changes video responses in this tab.`
-        : `${error} video2webxr can work around this if you allow it to access ${host}.`;
+    return scope === 'all' ? t('corsRedirect', host) : t('corsOffer', error, host);
 }
 
 // Works around a video blocked by CORS with the widest access already granted, or offers to ask
@@ -142,7 +140,7 @@ async function enter() {
         else showState(reply.state);
         if (reply.projection) projectionSelect.value = reply.projection;
     } catch (e) {
-        setStatus(`Couldn't start: ${e.message}`, true);
+        setStatus(t('couldntStart', e.message), true);
     }
     enterButton.disabled = false;
 }
@@ -150,13 +148,14 @@ async function enter() {
 async function stop() {
     const reply = await send({ type: COMMANDS.STOP }).catch(() => ({ state: 'idle' }));
     showState(reply.state);
-    setStatus('Stopped.');
+    setStatus(t('stopped'));
 }
 
 async function init() {
+    localizePage();
     const withDepth = await depthSupported();
-    for (const [value, label] of PROJECTION_LABELS) {
-        if (value !== 'FLAT_AI' || withDepth) projectionSelect.add(new Option(label, value));
+    for (const id of PROJECTION_IDS) {
+        if (id !== 'FLAT_AI' || withDepth) projectionSelect.add(new Option(projectionLabel(id), id));
     }
     projectionSelect.value = localStorage.getItem('projection') || DEFAULT_PROJECTION;
     if (!projectionSelect.value) projectionSelect.value = DEFAULT_PROJECTION; // remembered but unavailable
@@ -179,21 +178,21 @@ async function init() {
         return;
     }
     if (/^https?:\/\/([^/]+\.)?youtube\.com\//.test(tab.url || '')) {
-        setStatus('Open a video on YouTube to watch it in VR.');
+        setStatus(t('openYouTubeVideo'));
         projectionSelect.disabled = true;
         return;
     }
     try {
         target = await findTarget();
     } catch {
-        setStatus("This page can't be accessed by extensions.", true);
+        setStatus(t('pageInaccessible'), true);
         return;
     }
     if (!target) {
-        setStatus('No video found on this page.', true);
+        setStatus(t('noVideo'), true);
         return;
     }
-    setStatus('Video found. Enter VR, then click the video in the page.');
+    setStatus(t('videoFound'));
     enterButton.disabled = false;
     showState(target.state);
     if (target.state === 'none') return;
@@ -210,27 +209,27 @@ async function init() {
 async function explainBlocked(reply) {
     if (!reply.cors) return reply.error;
     const granted = (scope) => chrome.permissions.contains({ origins: corsOrigins(reply.cors, scope) });
-    if ((await granted('all')) || (await granted('servers'))) return `${reply.error} Click Enter VR to work around it.`;
+    if ((await granted('all')) || (await granted('servers'))) return t('corsGranted', reply.error);
     return offerAllow(reply.cors, 'servers', reply.error);
 }
 
 async function initYouTube() {
     onYouTube = true;
-    projectionSelect.add(new Option('Detect automatically', ''), 0);
+    projectionSelect.add(new Option(t('detectAutomatically'), ''), 0);
     projectionSelect.value = '';
     target = { frameId: 0, state: 'none' };
     let reply;
     try {
         reply = await send({ type: COMMANDS.STATE });
     } catch {
-        setStatus('Reload the page to use video2webxr on it.', true); // opened before the extension
+        setStatus(t('reloadPage'), true); // opened before the extension
         return;
     }
     enterButton.disabled = false;
     showState(reply.state);
     if (reply.projection) projectionSelect.value = reply.projection;
     if (reply.state === 'none' || reply.state === 'idle') {
-        setStatus('Enter VR, then click the video. You can also use the cardboard icon in the player.');
+        setStatus(t('youtubeHint'));
     }
     if (reply.error) setStatus(reply.error, true);
 }

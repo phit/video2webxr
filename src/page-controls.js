@@ -1,4 +1,5 @@
-import { PROJECTION_LABELS } from './projections.js';
+import { t } from './i18n.js';
+import { projectionLabel } from './projections.js';
 
 // YouTube's in-page controls for a VRPlayer, below the video: an Enter VR button and the
 // projection dropdown side by side, with a line below for why entering VR failed. They follow
@@ -32,14 +33,14 @@ export function createPageControls(player) {
 function createVRButton(player) {
     const button = document.createElement('button');
     styleControl(button);
-    button.style.minWidth = '110px';
-    button.textContent = 'ENTER VR';
+    Object.assign(button.style, { minWidth: '110px', textTransform: 'uppercase' });
+    button.textContent = t('enterVR');
     button.disabled = true;
     const supported = (mode) => navigator.xr?.isSessionSupported(mode).catch(() => false) ?? false;
     Promise.all([supported('immersive-vr'), supported('immersive-ar')]).then(([vr, ar]) => {
         button.disabled = !vr && !ar;
         if (button.disabled) {
-            button.textContent = 'VR NOT SUPPORTED';
+            button.textContent = t('vrNotSupported');
             button.style.cursor = 'default';
         }
     });
@@ -49,10 +50,10 @@ function createVRButton(player) {
         else player.startSession();
     };
     player.renderer.xr.addEventListener('sessionstart', () => {
-        button.textContent = 'EXIT VR';
+        button.textContent = t('exitVR');
     });
     player.renderer.xr.addEventListener('sessionend', () => {
-        button.textContent = 'ENTER VR';
+        button.textContent = t('enterVR');
     });
     return button;
 }
@@ -60,7 +61,7 @@ function createVRButton(player) {
 function createProjectionSelect(player) {
     const select = document.createElement('select');
     select.id = 'VRProjectionSelect';
-    select.title = 'Video projection';
+    select.title = t('projectionTitle');
     for (const id of player.projectionIds) select.appendChild(projectionOption(id));
     select.value = player.projection;
     styleControl(select);
@@ -86,7 +87,7 @@ function createProjectionSelect(player) {
 function projectionOption(id) {
     const option = document.createElement('option');
     option.value = id;
-    option.textContent = PROJECTION_LABELS.find(([value]) => value === id)[1];
+    option.textContent = projectionLabel(id);
     // the open dropdown list
     Object.assign(option.style, { background: CONTROL_BACKGROUND, color: CONTROL_TEXT });
     return option;

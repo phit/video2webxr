@@ -60,6 +60,7 @@ if (e2e) {
     fs.writeFileSync(`${outdir}/manifest.json`, JSON.stringify(manifest, null, 4));
 }
 for (const [source, target] of Object.entries(DEPTH_FILES)) copy(source, target);
+fs.cpSync('_locales', `${outdir}/_locales`, { recursive: true });
 
 const context = await esbuild.context({
     entryPoints: {

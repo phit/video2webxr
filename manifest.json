@@ -1,7 +1,8 @@
 {
     "name": "video2webxr",
     "version": "2.6.0",
-    "description": "Watch YouTube 360°/VR180 videos and videos on other sites in your PC VR headset via WebXR",
+    "description": "__MSG_extDescription__",
+    "default_locale": "en",
     "manifest_version": 3,
     "minimum_chrome_version": "120",
     "background": {
@@ -19,7 +20,7 @@
         }
     ],
     "action": {
-        "default_title": "Watch this video in VR",
+        "default_title": "__MSG_actionTitle__",
         "default_icon": {
             "16": "icons/icon16.png",
             "32": "icons/icon32.png",

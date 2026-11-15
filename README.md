@@ -12,6 +12,8 @@ A Chromium extension that plays web videos in your PC VR headset through WebXR, 
 
 Needs Chrome, Edge, Brave or another Chromium browser, version 120 or newer.
 
+In English, German, French, Spanish, Korean and Chinese (simplified), following the browser's language.
+
 **From a store**
 - Chrome, Brave and other Chromium browsers: [Chrome Web Store](https://chromewebstore.google.com/detail/video2webxr/bacbclkmpiflnfeggheehlhhdmjjcfni)
 - Microsoft Edge: [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/video2webxr/pegmdbgaelolcgnfadanmahjnlallpon)
@@ -129,6 +131,7 @@ Sources are in `src/`:
 - `vr-controls.js`: the in-VR panel, lasers, controller orbs, moving and resizing
 - `projections.js`: the projection names and other shared constants
 - `log.js`: debug logging
+- `i18n.js` and `_locales/`: translations; every visible text is a message in `_locales/<language>/messages.json`
 
 ```
 npm install

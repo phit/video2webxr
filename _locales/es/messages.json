@@ -1,0 +1,188 @@
+{
+    "extDescription": {
+        "message": "Vídeos de YouTube en 360°/VR180 y vídeos de otros sitios en un visor VR para PC mediante WebXR"
+    },
+    "actionTitle": {
+        "message": "Ver este vídeo en VR"
+    },
+    "watchInVR": {
+        "message": "Ver en VR"
+    },
+    "lookingForVideo": {
+        "message": "Buscando un vídeo…"
+    },
+    "allowRetry": {
+        "message": "Permitir y reintentar"
+    },
+    "allowAllRetry": {
+        "message": "Permitir en todos los sitios y reintentar"
+    },
+    "projection": {
+        "message": "Proyección"
+    },
+    "projectionTitle": {
+        "message": "Proyección del vídeo"
+    },
+    "enterVR": {
+        "message": "Entrar en VR"
+    },
+    "exitVR": {
+        "message": "Salir de VR"
+    },
+    "vrNotSupported": {
+        "message": "VR no compatible"
+    },
+    "stop": {
+        "message": "Detener"
+    },
+    "statusArmed": {
+        "message": "Haz clic en el vídeo de la página para entrar en VR."
+    },
+    "statusStarting": {
+        "message": "Iniciando VR… Comprueba que SteamVR se está ejecutando y que ningún otro navegador está en VR."
+    },
+    "statusActive": {
+        "message": "En VR. Los cambios de proyección se aplican al instante."
+    },
+    "accessDenied": {
+        "message": "Sin ese acceso no se puede leer el vídeo, así que no se puede mostrar en VR."
+    },
+    "corsRedirect": {
+        "message": "$HOST$ pasa el vídeo a otro servidor que video2webxr no puede conocer de antemano, así que sigue sin poder leerse. video2webxr puede solucionarlo con acceso a todos los sitios; aun así, solo cambia las respuestas de vídeo de esta pestaña.",
+        "placeholders": {
+            "host": {
+                "content": "$1"
+            }
+        }
+    },
+    "corsOffer": {
+        "message": "$ERROR$ video2webxr puede solucionarlo con acceso a $HOST$.",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            },
+            "host": {
+                "content": "$2"
+            }
+        }
+    },
+    "corsGranted": {
+        "message": "$ERROR$ Haz clic en «Entrar en VR» para solucionarlo.",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "couldntStart": {
+        "message": "No se pudo iniciar: $MESSAGE$",
+        "placeholders": {
+            "message": {
+                "content": "$1"
+            }
+        }
+    },
+    "stopped": {
+        "message": "Detenido."
+    },
+    "openYouTubeVideo": {
+        "message": "Abre un vídeo en YouTube para verlo en VR."
+    },
+    "pageInaccessible": {
+        "message": "Las extensiones no pueden acceder a esta página."
+    },
+    "noVideo": {
+        "message": "No se ha encontrado ningún vídeo en esta página."
+    },
+    "videoFound": {
+        "message": "Vídeo encontrado. Haz clic en «Entrar en VR» y luego en el vídeo de la página."
+    },
+    "detectAutomatically": {
+        "message": "Detectar automáticamente"
+    },
+    "reloadPage": {
+        "message": "Recarga la página para usar video2webxr en ella."
+    },
+    "youtubeHint": {
+        "message": "Haz clic en «Entrar en VR» y luego en el vídeo. El icono de Cardboard del reproductor también funciona."
+    },
+    "corsBlocked": {
+        "message": "Este sitio sirve el vídeo desde otro dominio sin permitir que se lea (CORS), así que no se puede mostrar en VR."
+    },
+    "corsStillBlocked": {
+        "message": "El servidor del vídeo sigue sin permitir que se lea, así que no se puede mostrar en VR."
+    },
+    "drmProtected": {
+        "message": "Este vídeo está protegido con DRM, así que el navegador no permite mostrarlo en VR."
+    },
+    "cantReadYet": {
+        "message": "Este vídeo aún no se puede leer. Abre la ventana de video2webxr para solucionarlo."
+    },
+    "clickToEnter": {
+        "message": "Haz clic en el vídeo para entrar en VR"
+    },
+    "runtimeRefused": {
+        "message": "El entorno de ejecución de VR no pudo iniciar una sesión. Puede que otro navegador o aplicación esté usando el visor: ciérralo o reinicia SteamVR y vuelve a intentarlo."
+    },
+    "enterFailed": {
+        "message": "No se pudo entrar en VR: $MESSAGE$",
+        "placeholders": {
+            "message": {
+                "content": "$1"
+            }
+        }
+    },
+    "depthStarting": {
+        "message": "Iniciando…"
+    },
+    "depthDownloading": {
+        "message": "Descargando $PERCENT$ %",
+        "placeholders": {
+            "percent": {
+                "content": "$1"
+            }
+        }
+    },
+    "depthUnavailable": {
+        "message": "No disponible"
+    },
+    "distance": {
+        "message": "Distancia"
+    },
+    "projection_EAC": {
+        "message": "360° EAC"
+    },
+    "projection_EAC_LR": {
+        "message": "360° EAC 3D"
+    },
+    "projection_CUBE": {
+        "message": "360° cubemap"
+    },
+    "projection_360": {
+        "message": "360° equirrectangular"
+    },
+    "projection_360_TB": {
+        "message": "360° 3D arriba/abajo"
+    },
+    "projection_360_LR": {
+        "message": "360° 3D lado a lado"
+    },
+    "projection_180": {
+        "message": "180°"
+    },
+    "projection_180_LR": {
+        "message": "180° 3D lado a lado"
+    },
+    "projection_FLAT": {
+        "message": "Pantalla plana"
+    },
+    "projection_FLAT_LR": {
+        "message": "Pantalla plana 3D lado a lado"
+    },
+    "projection_FLAT_TB": {
+        "message": "Pantalla plana 3D arriba/abajo"
+    },
+    "projection_FLAT_AI": {
+        "message": "Pantalla plana 3D (IA)"
+    }
+}

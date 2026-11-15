@@ -6,13 +6,13 @@
     </head>
     <body>
         <h1><img src="icons/icon32.png" alt="" /> video2webxr</h1>
-        <p id="status">Looking for a video…</p>
-        <button type="button" id="allow" hidden>Allow and retry</button>
-        <label for="projection">Projection</label>
+        <p id="status" data-i18n="lookingForVideo">Looking for a video…</p>
+        <button type="button" id="allow" hidden></button>
+        <label for="projection" data-i18n="projection">Projection</label>
         <select id="projection"></select>
         <div class="buttons">
-            <button type="button" id="enter" disabled>Enter VR</button>
-            <button type="button" id="stop" hidden>Stop</button>
+            <button type="button" id="enter" disabled data-i18n="enterVR">Enter VR</button>
+            <button type="button" id="stop" hidden data-i18n="stop">Stop</button>
         </div>
         <script src="popup.js"></script>
     </body>

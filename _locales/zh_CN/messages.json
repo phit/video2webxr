@@ -1,0 +1,188 @@
+{
+    "extDescription": {
+        "message": "通过 WebXR 在 PC VR 头显中观看 YouTube 360°/VR180 视频以及其他网站上的视频"
+    },
+    "actionTitle": {
+        "message": "在 VR 中观看此视频"
+    },
+    "watchInVR": {
+        "message": "在 VR 中观看"
+    },
+    "lookingForVideo": {
+        "message": "正在查找视频…"
+    },
+    "allowRetry": {
+        "message": "允许并重试"
+    },
+    "allowAllRetry": {
+        "message": "在所有网站上允许并重试"
+    },
+    "projection": {
+        "message": "投影方式"
+    },
+    "projectionTitle": {
+        "message": "视频投影方式"
+    },
+    "enterVR": {
+        "message": "进入 VR"
+    },
+    "exitVR": {
+        "message": "退出 VR"
+    },
+    "vrNotSupported": {
+        "message": "不支持 VR"
+    },
+    "stop": {
+        "message": "停止"
+    },
+    "statusArmed": {
+        "message": "点击页面中的视频以进入 VR。"
+    },
+    "statusStarting": {
+        "message": "正在启动 VR… 请确认 SteamVR 正在运行，且没有其他浏览器处于 VR 中。"
+    },
+    "statusActive": {
+        "message": "已进入 VR。更改投影方式会立即生效。"
+    },
+    "accessDenied": {
+        "message": "没有该访问权限就无法读取视频，因此无法在 VR 中显示。"
+    },
+    "corsRedirect": {
+        "message": "$HOST$ 将视频转交给另一台服务器，video2webxr 无法事先知道是哪台，因此仍无法读取。获得所有网站的访问权限后即可绕过这个问题；它仍然只会修改此标签页中的视频响应。",
+        "placeholders": {
+            "host": {
+                "content": "$1"
+            }
+        }
+    },
+    "corsOffer": {
+        "message": "$ERROR$ 获得 $HOST$ 的访问权限后，video2webxr 即可绕过这个问题。",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            },
+            "host": {
+                "content": "$2"
+            }
+        }
+    },
+    "corsGranted": {
+        "message": "$ERROR$ 点击“进入 VR”即可绕过。",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
+    },
+    "couldntStart": {
+        "message": "无法启动：$MESSAGE$",
+        "placeholders": {
+            "message": {
+                "content": "$1"
+            }
+        }
+    },
+    "stopped": {
+        "message": "已停止。"
+    },
+    "openYouTubeVideo": {
+        "message": "在 YouTube 上打开一个视频即可在 VR 中观看。"
+    },
+    "pageInaccessible": {
+        "message": "扩展程序无法访问此页面。"
+    },
+    "noVideo": {
+        "message": "未在此页面上找到视频。"
+    },
+    "videoFound": {
+        "message": "已找到视频。点击“进入 VR”，然后点击页面中的视频。"
+    },
+    "detectAutomatically": {
+        "message": "自动检测"
+    },
+    "reloadPage": {
+        "message": "重新加载页面后即可在其上使用 video2webxr。"
+    },
+    "youtubeHint": {
+        "message": "点击“进入 VR”，然后点击视频。也可以使用播放器中的 Cardboard 图标。"
+    },
+    "corsBlocked": {
+        "message": "此网站从另一个域名提供视频，且不允许读取（CORS），因此无法在 VR 中显示。"
+    },
+    "corsStillBlocked": {
+        "message": "视频所在的服务器仍拒绝读取，因此无法在 VR 中显示。"
+    },
+    "drmProtected": {
+        "message": "此视频受 DRM 保护，浏览器不允许在 VR 中显示。"
+    },
+    "cantReadYet": {
+        "message": "暂时无法读取此视频。打开 video2webxr 的弹出窗口即可解决。"
+    },
+    "clickToEnter": {
+        "message": "点击视频进入 VR"
+    },
+    "runtimeRefused": {
+        "message": "VR 运行时无法启动会话。可能有其他浏览器或应用正在使用头显：请将其关闭，或重启 SteamVR，然后重试。"
+    },
+    "enterFailed": {
+        "message": "进入 VR 失败：$MESSAGE$",
+        "placeholders": {
+            "message": {
+                "content": "$1"
+            }
+        }
+    },
+    "depthStarting": {
+        "message": "正在启动…"
+    },
+    "depthDownloading": {
+        "message": "正在下载 $PERCENT$%",
+        "placeholders": {
+            "percent": {
+                "content": "$1"
+            }
+        }
+    },
+    "depthUnavailable": {
+        "message": "不可用"
+    },
+    "distance": {
+        "message": "距离"
+    },
+    "projection_EAC": {
+        "message": "360° EAC"
+    },
+    "projection_EAC_LR": {
+        "message": "360° EAC 3D"
+    },
+    "projection_CUBE": {
+        "message": "360° 立方体贴图"
+    },
+    "projection_360": {
+        "message": "360° 等距柱状"
+    },
+    "projection_360_TB": {
+        "message": "360° 3D 上下"
+    },
+    "projection_360_LR": {
+        "message": "360° 3D 左右"
+    },
+    "projection_180": {
+        "message": "180°"
+    },
+    "projection_180_LR": {
+        "message": "180° 3D 左右"
+    },
+    "projection_FLAT": {
+        "message": "平面屏幕"
+    },
+    "projection_FLAT_LR": {
+        "message": "平面屏幕 3D 左右"
+    },
+    "projection_FLAT_TB": {
+        "message": "平面屏幕 3D 上下"
+    },
+    "projection_FLAT_AI": {
+        "message": "平面屏幕 3D (AI)"
+    }
+}
