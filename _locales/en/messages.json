@@ -149,6 +149,72 @@
     "distance": {
         "message": "Distance"
     },
+    "settings": {
+        "message": "Settings"
+    },
+    "defaultProjection": {
+        "message": "Default on other sites"
+    },
+    "youtubeFlatProjection": {
+        "message": "YouTube videos that aren't 360°, 180° or 3D"
+    },
+    "rememberedSites": {
+        "message": "Remembered per site"
+    },
+    "rememberedSitesNone": {
+        "message": "None yet. A projection picked in the popup is remembered for that site."
+    },
+    "forgetSite": {
+        "message": "Forget $HOST$",
+        "placeholders": {
+            "host": {
+                "content": "$1"
+            }
+        }
+    },
+    "controllers": {
+        "message": "Controllers"
+    },
+    "laserColor": {
+        "message": "Laser and orb colour"
+    },
+    "accentColor": {
+        "message": "Panel highlight colour"
+    },
+    "laserFades": {
+        "message": "Fade out the laser when a controller lies still"
+    },
+    "laserFadeDelay": {
+        "message": "Fade out after"
+    },
+    "laserFadeDuration": {
+        "message": "Fade duration"
+    },
+    "orbEnabled": {
+        "message": "Show an orb where a controller lies"
+    },
+    "orbAngle": {
+        "message": "Show the orb when looking within"
+    },
+    "seconds": {
+        "message": "$VALUE$ s",
+        "placeholders": {
+            "value": {
+                "content": "$1"
+            }
+        }
+    },
+    "degrees": {
+        "message": "$VALUE$°",
+        "placeholders": {
+            "value": {
+                "content": "$1"
+            }
+        }
+    },
+    "resetDefaults": {
+        "message": "Reset to defaults"
+    },
     "projection_EAC": {
         "message": "360° EAC"
     },

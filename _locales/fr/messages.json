@@ -149,6 +149,72 @@
     "distance": {
         "message": "Distance"
     },
+    "settings": {
+        "message": "Paramètres"
+    },
+    "defaultProjection": {
+        "message": "Par défaut sur les autres sites"
+    },
+    "youtubeFlatProjection": {
+        "message": "Vidéos YouTube qui ne sont ni 360°, ni 180°, ni 3D"
+    },
+    "rememberedSites": {
+        "message": "Mémorisée par site"
+    },
+    "rememberedSitesNone": {
+        "message": "Aucune pour l'instant. Une projection choisie dans la fenêtre est mémorisée pour ce site."
+    },
+    "forgetSite": {
+        "message": "Oublier $HOST$",
+        "placeholders": {
+            "host": {
+                "content": "$1"
+            }
+        }
+    },
+    "controllers": {
+        "message": "Manettes"
+    },
+    "laserColor": {
+        "message": "Couleur du laser et du cercle"
+    },
+    "accentColor": {
+        "message": "Couleur d'accent du panneau"
+    },
+    "laserFades": {
+        "message": "Masquer le laser quand une manette reste immobile"
+    },
+    "laserFadeDelay": {
+        "message": "Masquer après"
+    },
+    "laserFadeDuration": {
+        "message": "Durée du fondu"
+    },
+    "orbEnabled": {
+        "message": "Afficher un cercle là où une manette est posée"
+    },
+    "orbAngle": {
+        "message": "Afficher le cercle quand le regard est à moins de"
+    },
+    "seconds": {
+        "message": "$VALUE$ s",
+        "placeholders": {
+            "value": {
+                "content": "$1"
+            }
+        }
+    },
+    "degrees": {
+        "message": "$VALUE$°",
+        "placeholders": {
+            "value": {
+                "content": "$1"
+            }
+        }
+    },
+    "resetDefaults": {
+        "message": "Rétablir les valeurs par défaut"
+    },
     "projection_EAC": {
         "message": "360° EAC"
     },

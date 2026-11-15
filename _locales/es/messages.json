@@ -149,6 +149,72 @@
     "distance": {
         "message": "Distancia"
     },
+    "settings": {
+        "message": "Ajustes"
+    },
+    "defaultProjection": {
+        "message": "Predeterminada en otros sitios"
+    },
+    "youtubeFlatProjection": {
+        "message": "Vídeos de YouTube que no son 360°, 180° ni 3D"
+    },
+    "rememberedSites": {
+        "message": "Recordada por sitio"
+    },
+    "rememberedSitesNone": {
+        "message": "Ninguna todavía. La proyección elegida en la ventana se recuerda para ese sitio."
+    },
+    "forgetSite": {
+        "message": "Olvidar $HOST$",
+        "placeholders": {
+            "host": {
+                "content": "$1"
+            }
+        }
+    },
+    "controllers": {
+        "message": "Mandos"
+    },
+    "laserColor": {
+        "message": "Color del láser y del círculo"
+    },
+    "accentColor": {
+        "message": "Color de resalte del panel"
+    },
+    "laserFades": {
+        "message": "Ocultar el láser cuando un mando está quieto"
+    },
+    "laserFadeDelay": {
+        "message": "Ocultar tras"
+    },
+    "laserFadeDuration": {
+        "message": "Duración del fundido"
+    },
+    "orbEnabled": {
+        "message": "Mostrar un círculo donde está un mando dejado"
+    },
+    "orbAngle": {
+        "message": "Mostrar el círculo al mirar a menos de"
+    },
+    "seconds": {
+        "message": "$VALUE$ s",
+        "placeholders": {
+            "value": {
+                "content": "$1"
+            }
+        }
+    },
+    "degrees": {
+        "message": "$VALUE$°",
+        "placeholders": {
+            "value": {
+                "content": "$1"
+            }
+        }
+    },
+    "resetDefaults": {
+        "message": "Restablecer valores predeterminados"
+    },
     "projection_EAC": {
         "message": "360° EAC"
     },

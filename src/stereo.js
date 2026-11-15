@@ -122,14 +122,10 @@ const STEREO_MAX_CHECKS = 60000 / STEREO_CHECK_MS;
 // Switches a VRPlayer showing a mono projection to its 3D variant if the frames have that
 // layout. Samples frames until enough agree, skipping frames too dark or plain to tell.
 // isCurrent: whether the player is still in use; skip: whether to ignore the current frame
-// (YouTube's ads). Stops when the projection is changed by anything else, e.g. the user.
-export function detectStereo(
-    vrPlayer,
-    { isCurrent, skip = () => false },
-    mono = vrPlayer.projection,
-    votes = {},
-    attempt = 0,
-) {
+// (YouTube's ads); onSettled(projection): called with the result, mono or 3D. Stops when the
+// projection is changed by anything else, e.g. the user.
+export function detectStereo(vrPlayer, options, mono = vrPlayer.projection, votes = {}, attempt = 0) {
+    const { isCurrent, skip = () => false, onSettled } = options;
     const variants = STEREO_VARIANTS[mono];
     if (!variants || !isCurrent() || vrPlayer.projection !== mono) return;
     const skipped = skip();
@@ -151,7 +147,8 @@ export function detectStereo(
         if (vote) {
             votes[vote] = (votes[vote] || 0) + 1;
             if (votes[vote] === (VOTES_NEEDED[mono] ?? 2)) {
-                vrPlayer.setProjection(vote);
+                if (vote !== mono) vrPlayer.setProjection(vote);
+                onSettled?.(vote);
                 return;
             }
         }
@@ -159,5 +156,5 @@ export function detectStereo(
     // give up after a minute of the actual video (skipped frames don't count) without a clear answer
     const checked = skipped ? attempt : attempt + 1;
     if (checked < STEREO_MAX_CHECKS)
-        setTimeout(() => detectStereo(vrPlayer, { isCurrent, skip }, mono, votes, checked), STEREO_CHECK_MS);
+        setTimeout(() => detectStereo(vrPlayer, options, mono, votes, checked), STEREO_CHECK_MS);
 }

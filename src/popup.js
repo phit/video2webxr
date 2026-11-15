@@ -2,6 +2,7 @@ import { ALL_SITES, corsOrigins, corsRule } from './cors-rule.js';
 import { localizePage, t } from './i18n.js';
 import { COMMANDS } from './popup-protocol.js';
 import { DEFAULT_PROJECTION, depthSupported, PROJECTION_IDS, projectionLabel } from './projections.js';
+import { loadSettings, rememberSiteProjection, saveSettings, siteProjections } from './settings.js';
 
 // The extension's toolbar popup. Finds the largest video in the tab, injects generic.js into
 // its frame and sends it commands. The page gets no controls of its own.
@@ -157,14 +158,7 @@ async function init() {
     for (const id of PROJECTION_IDS) {
         if (id !== 'FLAT_AI' || withDepth) projectionSelect.add(new Option(projectionLabel(id), id));
     }
-    projectionSelect.value = localStorage.getItem('projection') || DEFAULT_PROJECTION;
-    if (!projectionSelect.value) projectionSelect.value = DEFAULT_PROJECTION; // remembered but unavailable
-    projectionSelect.onchange = () => {
-        // the remembered choice is for other sites; YouTube detects the projection per video
-        if (!onYouTube) localStorage.setItem('projection', projectionSelect.value);
-        if (target && target.state !== 'none' && projectionSelect.value)
-            send({ type: COMMANDS.SET_PROJECTION, projection: projectionSelect.value }).catch(() => {});
-    };
+    document.getElementById('settings').onclick = () => chrome.runtime.openOptionsPage();
     enterButton.onclick = enter;
     stopButton.onclick = stop;
     allowButton.onclick = allow;
@@ -172,6 +166,22 @@ async function init() {
     // the e2e tests open the popup as a page and name the tab: popup.html?tab=<id>
     const testTab = Number(new URLSearchParams(location.search).get('tab'));
     [tab] = testTab ? [await chrome.tabs.get(testTab)] : await chrome.tabs.query({ active: true, currentWindow: true });
+    let host = '';
+    try {
+        host = new URL(tab.url).hostname;
+    } catch {} // no access to the tab's address
+
+    // the projection remembered for this site, else the default from the settings
+    await migrateRememberedProjection();
+    const [settings, sites] = await Promise.all([loadSettings(), siteProjections()]);
+    projectionSelect.value = sites[host] || settings.defaultProjection;
+    if (!projectionSelect.value) projectionSelect.value = DEFAULT_PROJECTION; // remembered but unavailable
+    projectionSelect.onchange = () => {
+        // remembered for other sites; YouTube detects the projection per video
+        if (!onYouTube && host) rememberSiteProjection(host, projectionSelect.value);
+        if (target && target.state !== 'none' && projectionSelect.value)
+            send({ type: COMMANDS.SET_PROJECTION, projection: projectionSelect.value }).catch(() => {});
+    };
     // live streams also play at /live/<id>
     if (/^https?:\/\/([^/]+\.)?youtube\.com\/(watch|live\/)/.test(tab.url || '')) {
         await initYouTube();
@@ -202,6 +212,14 @@ async function init() {
     // tell the user why the last attempt didn't work, and for a video blocked by CORS (found when
     // the video was clicked), how to get past it
     if (target.state === 'idle' && reply.error) setStatus(await explainBlocked(reply), true);
+}
+
+// Before the settings, the popup remembered one projection for all sites; that's the default now
+async function migrateRememberedProjection() {
+    const remembered = localStorage.getItem('projection');
+    if (!remembered) return;
+    await saveSettings({ defaultProjection: remembered });
+    localStorage.removeItem('projection');
 }
 
 // The error for a blocked video, with what to do: Enter VR applies the workaround if the access

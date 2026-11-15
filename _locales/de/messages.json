@@ -149,6 +149,72 @@
     "distance": {
         "message": "Abstand"
     },
+    "settings": {
+        "message": "Einstellungen"
+    },
+    "defaultProjection": {
+        "message": "Standard auf anderen Websites"
+    },
+    "youtubeFlatProjection": {
+        "message": "YouTube-Videos, die nicht 360°, 180° oder 3D sind"
+    },
+    "rememberedSites": {
+        "message": "Pro Website gemerkt"
+    },
+    "rememberedSitesNone": {
+        "message": "Noch keine. Eine im Pop-up gewählte Projektion wird für die Website gemerkt."
+    },
+    "forgetSite": {
+        "message": "$HOST$ vergessen",
+        "placeholders": {
+            "host": {
+                "content": "$1"
+            }
+        }
+    },
+    "controllers": {
+        "message": "Controller"
+    },
+    "laserColor": {
+        "message": "Farbe von Laser und Kreis"
+    },
+    "accentColor": {
+        "message": "Akzentfarbe der Bedienleiste"
+    },
+    "laserFades": {
+        "message": "Laser ausblenden, wenn ein Controller stillliegt"
+    },
+    "laserFadeDelay": {
+        "message": "Ausblenden nach"
+    },
+    "laserFadeDuration": {
+        "message": "Dauer des Ausblendens"
+    },
+    "orbEnabled": {
+        "message": "Kreis am abgelegten Controller zeigen"
+    },
+    "orbAngle": {
+        "message": "Kreis zeigen bei Blick innerhalb von"
+    },
+    "seconds": {
+        "message": "$VALUE$ s",
+        "placeholders": {
+            "value": {
+                "content": "$1"
+            }
+        }
+    },
+    "degrees": {
+        "message": "$VALUE$°",
+        "placeholders": {
+            "value": {
+                "content": "$1"
+            }
+        }
+    },
+    "resetDefaults": {
+        "message": "Auf Standard zurücksetzen"
+    },
     "projection_EAC": {
         "message": "360° EAC"
     },

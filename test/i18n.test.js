@@ -26,12 +26,13 @@ test('every key the code and pages use exists, and every English key is used', (
     const sources = fs.readdirSync(new URL('src/', root)).map((file) => read(`src/${file}`));
     const used = new Set([
         ...sources.flatMap((source) => [...source.matchAll(/\bt\('(\w+)'/g)].map((m) => m[1])),
-        ...sources.flatMap((source) => [...source.matchAll(/data-i18n="(\w+)"/g)].map((m) => m[1])),
+        ...sources.flatMap((source) => [...source.matchAll(/data-i18n(?:-title)?="(\w+)"/g)].map((m) => m[1])),
         ...[...read('manifest.json').matchAll(/__MSG_(\w+)__/g)].map((m) => m[1]),
         ...PROJECTION_IDS.map((id) => `projection_${id}`),
     ]);
-    // built by key in the code: t(scope === 'all' ? 'allowAllRetry' : 'allowRetry')
-    used.add('allowAllRetry').add('allowRetry');
+    // built by key in the code: t(scope === 'all' ? 'allowAllRetry' : 'allowRetry'), and the
+    // options page's units from data-unit
+    for (const key of ['allowAllRetry', 'allowRetry', 'seconds', 'degrees']) used.add(key);
     for (const key of used) assert.ok(english[key], `missing message ${key}`);
     for (const key of Object.keys(english)) assert.ok(used.has(key), `unused message ${key}`);
 });

@@ -149,6 +149,72 @@
     "distance": {
         "message": "거리"
     },
+    "settings": {
+        "message": "설정"
+    },
+    "defaultProjection": {
+        "message": "다른 사이트의 기본값"
+    },
+    "youtubeFlatProjection": {
+        "message": "360°, 180°, 3D가 아닌 YouTube 동영상"
+    },
+    "rememberedSites": {
+        "message": "사이트별로 기억됨"
+    },
+    "rememberedSitesNone": {
+        "message": "아직 없습니다. 팝업에서 선택한 투영 방식은 해당 사이트에 기억됩니다."
+    },
+    "forgetSite": {
+        "message": "$HOST$ 삭제",
+        "placeholders": {
+            "host": {
+                "content": "$1"
+            }
+        }
+    },
+    "controllers": {
+        "message": "컨트롤러"
+    },
+    "laserColor": {
+        "message": "레이저와 원 색상"
+    },
+    "accentColor": {
+        "message": "패널 강조 색상"
+    },
+    "laserFades": {
+        "message": "컨트롤러가 가만히 있으면 레이저 숨기기"
+    },
+    "laserFadeDelay": {
+        "message": "숨기기까지 시간"
+    },
+    "laserFadeDuration": {
+        "message": "페이드 시간"
+    },
+    "orbEnabled": {
+        "message": "내려놓은 컨트롤러 위치에 원 표시"
+    },
+    "orbAngle": {
+        "message": "원을 표시할 시선 각도"
+    },
+    "seconds": {
+        "message": "$VALUE$초",
+        "placeholders": {
+            "value": {
+                "content": "$1"
+            }
+        }
+    },
+    "degrees": {
+        "message": "$VALUE$°",
+        "placeholders": {
+            "value": {
+                "content": "$1"
+            }
+        }
+    },
+    "resetDefaults": {
+        "message": "기본값으로 재설정"
+    },
     "projection_EAC": {
         "message": "360° EAC"
     },

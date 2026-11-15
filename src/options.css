@@ -1,0 +1,111 @@
+:root {
+    color-scheme: dark;
+}
+body {
+    max-width: 480px;
+    margin: 0;
+    padding: 4px 16px 16px;
+    background: #202124;
+    color: #e8eaed;
+    font:
+        13px system-ui,
+        sans-serif;
+}
+h2 {
+    margin: 16px 0 10px;
+    font-size: 15px;
+}
+label,
+.label {
+    display: block;
+    margin: 0 0 4px;
+    color: #9aa0a6;
+}
+select {
+    width: 100%;
+    margin-bottom: 12px;
+    padding: 7px 8px;
+    border: 1px solid #5f6368;
+    border-radius: 4px;
+    background: #303134;
+    color: inherit;
+    font: inherit;
+}
+.hint {
+    color: #9aa0a6;
+}
+#sites {
+    margin: 0 0 12px;
+    padding: 0;
+    list-style: none;
+}
+#sites li {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 4px 0;
+}
+#sites li .hint {
+    margin-left: auto;
+}
+#sites button {
+    padding: 0 6px;
+    border: none;
+    background: none;
+    color: #9aa0a6;
+    font-size: 16px;
+    cursor: pointer;
+}
+#sites button:hover {
+    color: #f28b82;
+}
+.colors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+.colors label,
+.check {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    color: inherit;
+}
+.check {
+    margin: 12px 0 8px;
+}
+input[type="color"] {
+    width: 32px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid #5f6368;
+    border-radius: 4px;
+    background: none;
+}
+.range {
+    display: grid;
+    grid-template-columns: 1fr 140px 48px;
+    gap: 8px;
+    align-items: center;
+    margin: 0 0 6px 24px;
+}
+.range label {
+    margin: 0;
+}
+.range output {
+    text-align: right;
+}
+.range.off {
+    opacity: 0.5;
+}
+#reset {
+    margin-top: 16px;
+    padding: 7px 12px;
+    border: 1px solid #5f6368;
+    border-radius: 4px;
+    background: #303134;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}

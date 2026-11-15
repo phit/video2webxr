@@ -44,7 +44,7 @@ The toolbar button works on YouTube too, as on other sites: click "Enter VR" in 
 **On other sites**
 1. Start playing the video
 2. Click the video2webxr button in the browser toolbar (pin it from the extensions menu)
-3. Pick the projection in the popup (defaults to Flat screen; your choice is remembered) and click "Enter VR". You only need to pick flat, 360° or 180°: if the video turns out to be 3D side by side or top/bottom, it switches to the 3D option by itself
+3. Pick the projection in the popup (defaults to Flat screen; your choice is remembered for the site) and click "Enter VR". You only need to pick flat, 360° or 180°: if the video turns out to be 3D side by side or top/bottom, it switches to the 3D option by itself
 4. Click the video in the page to enter VR. Browsers only start VR from a click in the page itself, so this step can't be skipped
 5. Use the controls in VR, or open the popup again to change the projection or click "Stop"
 
@@ -72,6 +72,14 @@ A controls panel floats below the video: play/pause, the seek bar, skip 10 secon
 | Sit further back from a 180° video | Step backwards: the video stays where it is, as if it were a dome about 6 m across, so close-ups feel less in your face. Or press DISTANCE on the panel to step through three levels without moving (remembered per site). Recenter makes your current spot the centre again |
 | See the room around the screen | Press the passthrough button (the headset icon). It works where the browser supports AR with passthrough, e.g. Chromium or Chrome on the Steam Frame, and only shows there, on the flat screen and on 180° videos (a 360° video leaves no room to see) |
 | Put everything back in front of you | Recenter on the panel. On 360° and 180° videos it also turns the front of the video to where you look |
+
+### Settings
+
+Open them from the gear in the popup, or from the extension's details page:
+- **Projection:** the default on other sites, and the projection for YouTube videos that aren't 360°, 180° or 3D (e.g. always Flat screen 3D (AI)); the sites with a remembered projection, to forget them
+- **Controllers:** the colour of the lasers and orbs and of the panel's highlights, how soon a still controller's laser fades out and how fast, and whether the orb shows and how directly you have to look at it
+
+Changes apply at once, also while in VR.
 
 ### Videos to try
 
@@ -131,6 +139,7 @@ Sources are in `src/`:
 - `vr-controls.js`: the in-VR panel, lasers, controller orbs, moving and resizing
 - `projections.js`: the projection names and other shared constants
 - `log.js`: debug logging
+- `settings.js`, `options.*`: the settings and their page
 - `i18n.js` and `_locales/`: translations; every visible text is a message in `_locales/<language>/messages.json`
 
 ```

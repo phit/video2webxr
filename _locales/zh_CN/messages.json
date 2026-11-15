@@ -149,6 +149,72 @@
     "distance": {
         "message": "距离"
     },
+    "settings": {
+        "message": "设置"
+    },
+    "defaultProjection": {
+        "message": "其他网站的默认设置"
+    },
+    "youtubeFlatProjection": {
+        "message": "非 360°、180° 或 3D 的 YouTube 视频"
+    },
+    "rememberedSites": {
+        "message": "按网站记住的设置"
+    },
+    "rememberedSitesNone": {
+        "message": "暂无。在弹出窗口中选择的投影方式会针对该网站记住。"
+    },
+    "forgetSite": {
+        "message": "忘记 $HOST$",
+        "placeholders": {
+            "host": {
+                "content": "$1"
+            }
+        }
+    },
+    "controllers": {
+        "message": "控制器"
+    },
+    "laserColor": {
+        "message": "激光和光点颜色"
+    },
+    "accentColor": {
+        "message": "面板强调色"
+    },
+    "laserFades": {
+        "message": "控制器静止时淡出激光"
+    },
+    "laserFadeDelay": {
+        "message": "淡出前等待"
+    },
+    "laserFadeDuration": {
+        "message": "淡出时长"
+    },
+    "orbEnabled": {
+        "message": "在放下的控制器处显示光点"
+    },
+    "orbAngle": {
+        "message": "视线在此角度内时显示光点"
+    },
+    "seconds": {
+        "message": "$VALUE$ 秒",
+        "placeholders": {
+            "value": {
+                "content": "$1"
+            }
+        }
+    },
+    "degrees": {
+        "message": "$VALUE$°",
+        "placeholders": {
+            "value": {
+                "content": "$1"
+            }
+        }
+    },
+    "resetDefaults": {
+        "message": "恢复默认设置"
+    },
     "projection_EAC": {
         "message": "360° EAC"
     },

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>video2webxr</title>
+        <link rel="stylesheet" href="options.css" />
+    </head>
+    <body>
+        <h2 data-i18n="projection">Projection</h2>
+        <label for="defaultProjection" data-i18n="defaultProjection">Default on other sites</label>
+        <select id="defaultProjection" data-setting="defaultProjection"></select>
+        <label for="youtubeFlatProjection" data-i18n="youtubeFlatProjection">YouTube videos</label>
+        <select id="youtubeFlatProjection" data-setting="youtubeFlatProjection"></select>
+        <p class="label" data-i18n="rememberedSites">Remembered per site</p>
+        <ul id="sites"></ul>
+        <p id="noSites" class="hint" data-i18n="rememberedSitesNone" hidden>None yet.</p>
+
+        <h2 data-i18n="controllers">Controllers</h2>
+        <div class="colors">
+            <label><input type="color" data-setting="laserColor" /> <span data-i18n="laserColor">Laser</span></label>
+            <label><input type="color" data-setting="accentColor" /> <span data-i18n="accentColor">Accent</span></label>
+        </div>
+        <label class="check">
+            <input type="checkbox" data-setting="laserFades" /> <span data-i18n="laserFades">Fade out</span>
+        </label>
+        <div class="range" data-depends="laserFades">
+            <label for="laserFadeDelay" data-i18n="laserFadeDelay">Fade out after</label>
+            <input type="range" id="laserFadeDelay" data-setting="laserFadeDelay" min="1" max="10" step="1" />
+            <output data-unit="seconds"></output>
+        </div>
+        <div class="range" data-depends="laserFades">
+            <label for="laserFadeDuration" data-i18n="laserFadeDuration">Fade duration</label>
+            <input type="range" id="laserFadeDuration" data-setting="laserFadeDuration" min="0.1" max="2" step="0.1" />
+            <output data-unit="seconds"></output>
+        </div>
+        <label class="check">
+            <input type="checkbox" data-setting="orbEnabled" /> <span data-i18n="orbEnabled">Orb</span>
+        </label>
+        <div class="range" data-depends="orbEnabled">
+            <label for="orbAngle" data-i18n="orbAngle">Show the orb when looking within</label>
+            <input type="range" id="orbAngle" data-setting="orbAngle" min="10" max="60" step="5" />
+            <output data-unit="degrees"></output>
+        </div>
+
+        <button type="button" id="reset" data-i18n="resetDefaults">Reset to defaults</button>
+        <script src="options.js"></script>
+    </body>
+</html>

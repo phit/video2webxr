@@ -5,8 +5,11 @@ import { debug } from './log.js';
 import { createPageControls } from './page-controls.js';
 import { answerPopup, COMMANDS } from './popup-protocol.js';
 import { youtubeProjection } from './projections.js';
+import { settings, watchSettings } from './settings.js';
 import { detectStereo } from './stereo.js';
 import { VRPlayer } from './vr-player.js';
+
+watchSettings();
 
 let player = null;
 let pageControls = null; // below the video while VR is enabled
@@ -91,11 +94,26 @@ function enableVRVideo(ytPlayer, picked) {
         detectStereo(vrPlayer, {
             isCurrent: () => player === vrPlayer,
             skip: () => !!ytPlayer.classList.contains('ad-showing'),
+            onSettled: (result) => {
+                if (result === 'FLAT') useFlatDefault(vrPlayer);
+            },
         });
 
     // the Enter VR button and projection dropdown, below the video, next to YouTube's own notices
     pageControls = createPageControls(player);
     ytPlayer.closest('ytd-watch-flexy')?.querySelector('#alerts')?.appendChild(pageControls);
+}
+
+// A video detected as plain flat gets the projection picked in the settings for those; the AI
+// one only once it's known to run here
+function useFlatDefault(vrPlayer) {
+    const wanted = settings.youtubeFlatProjection;
+    if (wanted === 'FLAT') return;
+    const apply = () => {
+        if (player === vrPlayer && vrPlayer.projection === 'FLAT') vrPlayer.setProjection(wanted);
+    };
+    if (wanted !== 'FLAT_AI' || vrPlayer.depthSupported) apply();
+    else vrPlayer.addEventListener('depthsupported', apply, { once: true });
 }
 
 function disableVRVideo() {

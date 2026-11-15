@@ -3,6 +3,7 @@ import { t } from './i18n.js';
 import { debug } from './log.js';
 import { answerPopup, COMMANDS } from './popup-protocol.js';
 import { DEFAULT_PROJECTION, enterVRError } from './projections.js';
+import { watchSettings } from './settings.js';
 import { detectStereo } from './stereo.js';
 import { checkARSupport, VRPlayer } from './vr-player.js';
 
@@ -229,5 +230,6 @@ function createController() {
 // the popup may inject this script more than once
 if (!window.__video2webxr) {
     window.__video2webxr = createController();
+    watchSettings();
     answerPopup((message) => window.__video2webxr.handle(message));
 }

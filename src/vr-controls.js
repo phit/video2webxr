@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { t } from './i18n.js';
 import { forwardFromYaw } from './meshes.js';
 import { DEPTH_STRENGTHS, DISTANCES, projectionLabel } from './projections.js';
+import { onSettingsChange, settings } from './settings.js';
 
 // In-VR controls: a laser from each controller, a panel with the video's controls, and
 // moving things around like in the Steam Frame's UI. Point the laser and pull the trigger to
@@ -27,13 +28,12 @@ const MAX_SCALE = 10;
 // but lags more
 const SMOOTHING = 12;
 // A controller's laser fades out once it has stayed within STILL_METRES and STILL_RADIANS of
-// one pose for STILL_SECONDS (put down, or resting in a lap), unless it points at something;
-// it's back at once when the controller moves or a button or the thumbstick is used.
-// Tracking noise of a resting controller is well below these.
+// one pose for settings.laserFadeDelay seconds (put down, or resting in a lap), unless it points
+// at something; it's back at once when the controller moves or a button or the thumbstick is
+// used. Tracking noise of a resting controller is well below these.
 const STILL_METRES = 0.01;
 const STILL_RADIANS = THREE.MathUtils.degToRad(2);
-const STILL_SECONDS = 3;
-const FADE_SECONDS = 0.4;
+const ORB_FADE_SECONDS = 0.4;
 const LASER_OPACITY = 0.5;
 const STICK_DEADZONE = 0.2;
 // The laser's smoothing (see smoothPointer()): how quickly it follows the controller, in Hz,
@@ -95,7 +95,9 @@ const THEME = {
     panel: 'rgba(35, 38, 46, 0.96)',
     focus: '#3d4450',
     button: '#323843',
-    accent: '#1a9fff',
+    get accent() {
+        return settings.accentColor;
+    },
     track: '#4b5260',
     buffered: '#6b7280',
     separator: '#3a3f4a',
@@ -165,7 +167,7 @@ function laserMesh() {
     return new THREE.Mesh(
         geometry,
         new THREE.MeshBasicMaterial({
-            color: THEME.accent,
+            color: settings.laserColor,
             transparent: true,
             opacity: LASER_OPACITY,
             depthWrite: false,
@@ -173,8 +175,7 @@ function laserMesh() {
     );
 }
 
-// The orb at a controller: a small solid core in a faint halo, in the HUD's blue
-const ORB_LOOK_RADIANS = THREE.MathUtils.degToRad(30); // shows when looked at within this
+// The orb at a controller: a small solid core in a faint halo, in the laser's colour
 function orbMesh() {
     const orb = new THREE.Group();
     for (const [radius, opacity] of [
@@ -183,7 +184,7 @@ function orbMesh() {
     ]) {
         const part = new THREE.Mesh(
             new THREE.SphereGeometry(radius, 16, 12),
-            new THREE.MeshBasicMaterial({ color: THEME.accent, transparent: true, opacity, depthWrite: false }),
+            new THREE.MeshBasicMaterial({ color: settings.laserColor, transparent: true, opacity, depthWrite: false }),
         );
         part.userData.opacity = opacity;
         orb.add(part);
@@ -252,6 +253,15 @@ export class VRControls {
         };
         this.renderer.xr.addEventListener('sessionstart', this.onSessionStart);
         this.renderer.xr.addEventListener('sessionend', this.onSessionEnd);
+        // colours apply at once, also in VR; the timings and the orb are read every frame
+        this.stopWatchingSettings = onSettingsChange(() => {
+            for (const { userData } of this.controllers) {
+                for (const mesh of [userData.laser, userData.dot, ...userData.orb.children]) {
+                    mesh.material.color.set(settings.laserColor);
+                }
+            }
+            this.drawnState = null;
+        });
     }
 
     createController(index) {
@@ -260,7 +270,7 @@ export class VRControls {
         laser.scale.setScalar(LASER_LENGTH);
         const dot = new THREE.Mesh(
             new THREE.SphereGeometry(0.006, 12, 8),
-            new THREE.MeshBasicMaterial({ color: THEME.accent, transparent: true }),
+            new THREE.MeshBasicMaterial({ color: settings.laserColor, transparent: true }),
         );
         dot.visible = false;
         // the laser hangs on a smoothed copy of the controller's pose, see smoothPointer()
@@ -469,17 +479,17 @@ export class VRControls {
         if (grip.visible) {
             const { position, direction } = this.headPose();
             const toOrb = grip.getWorldPosition(new THREE.Vector3()).sub(position);
-            lookTarget = toOrb.angleTo(direction) < ORB_LOOK_RADIANS ? 1 : 0;
+            lookTarget = toOrb.angleTo(direction) < THREE.MathUtils.degToRad(settings.orbAngle) ? 1 : 0;
         }
-        const step = delta / FADE_SECONDS;
+        const step = delta / ORB_FADE_SECONDS;
         data.lookedAt = THREE.MathUtils.clamp(data.lookedAt + (lookTarget ? step : -step), 0, 1);
         const shown = Math.max(fade, data.lookedAt);
-        orb.visible = grip.visible && shown > 0;
+        orb.visible = settings.orbEnabled && grip.visible && shown > 0;
         for (const part of orb.children) part.material.opacity = part.userData.opacity * shown;
     }
 
     // How visible the controller's laser is, 0-1: fading out once the controller has been still
-    // for a while (see STILL_SECONDS), back to 1 at once when it's used
+    // for a while (see settings.laserFadeDelay), back to 1 at once when it's used
     stillFade(controller, gamepad, delta) {
         const data = controller.userData;
         const used =
@@ -492,14 +502,15 @@ export class VRControls {
         const moved =
             controller.position.distanceTo(data.stillPosition) > STILL_METRES ||
             controller.quaternion.angleTo(data.stillQuaternion) > STILL_RADIANS;
-        if (used || moved) {
+        if (used || moved || !settings.laserFades) {
             data.stillPosition.copy(controller.position);
             data.stillQuaternion.copy(controller.quaternion);
             data.stillSeconds = 0;
             data.fade = 1;
         } else {
             data.stillSeconds += delta;
-            if (data.stillSeconds > STILL_SECONDS) data.fade = Math.max(0, data.fade - delta / FADE_SECONDS);
+            if (data.stillSeconds > settings.laserFadeDelay)
+                data.fade = Math.max(0, data.fade - delta / settings.laserFadeDuration);
         }
         return data.fade;
     }
@@ -1047,6 +1058,7 @@ export class VRControls {
 
     dispose() {
         clearTimeout(this.screenClickTimer);
+        this.stopWatchingSettings();
         this.renderer.xr.removeEventListener('sessionstart', this.onSessionStart);
         this.renderer.xr.removeEventListener('sessionend', this.onSessionEnd);
         for (const controller of this.controllers) {

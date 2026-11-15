@@ -19,6 +19,25 @@ h1 img {
     width: 20px;
     height: 20px;
 }
+#settings {
+    width: auto;
+    margin-left: auto;
+    padding: 4px;
+    border: none;
+    background: none;
+    color: #9aa0a6;
+    line-height: 0;
+}
+#settings:hover {
+    color: #e8eaed;
+}
+#settings svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+}
 #status {
     margin: 0 0 12px;
     line-height: 1.4;
