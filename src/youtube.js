@@ -8,7 +8,7 @@ let player = null;
 
 function handleCardboardIconClick(event) {
     if (player) return; // already on
-    EnableVRVideo(event.currentTarget.closest('.html5-video-player'));
+    enableVRVideo(event.currentTarget.closest('.html5-video-player'));
 }
 
 // A button like the player's own, so it has a tooltip and works from the keyboard
@@ -75,7 +75,7 @@ function detectProjection() {
 // navigated away from in the DOM, hidden, so a channel page's #alerts comes before the
 // watch page's in the document. picked: a projection the user chose in the popup, which skips
 // the detection
-function EnableVRVideo(ytPlayer, picked) {
+function enableVRVideo(ytPlayer, picked) {
     const videoElement = ytPlayer.querySelector('video');
 
     // remove the webgl viewer of the 360 video
@@ -131,7 +131,7 @@ function arm(picked) {
     if (!player) {
         const ytPlayer = document.querySelector('#movie_player');
         if (!ytPlayer?.querySelector('video')) return { error: 'No video found on this page.' };
-        EnableVRVideo(ytPlayer, picked);
+        enableVRVideo(ytPlayer, picked);
     } else if (picked) {
         player.setProjection(picked);
     }
