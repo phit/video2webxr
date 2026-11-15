@@ -75,6 +75,7 @@ export class DepthEstimator {
     // Depth of a frame (a video, or an ImageBitmap of one; flipped: stored upside down):
     // { data (relative inverse depth, larger is closer), width, height }
     async estimate(frame, flipped = false) {
+        const started = performance.now();
         const width = this.size;
         const height = this.size;
         this.canvas.width = width;
@@ -89,7 +90,9 @@ export class DepthEstimator {
             for (let c = 0; c < 3; c++) input[c * size + i] = (pixels[i * 4 + c] / 255 - MEAN[c]) / STD[c];
         }
         const feeds = { [this.session.inputNames[0]]: new ort.Tensor('float32', input, [1, 3, height, width]) };
+        const prepared = performance.now();
         const output = (await this.session.run(feeds))[this.session.outputNames[0]];
+        this.timing = { prepare: prepared - started, run: performance.now() - prepared };
         return { data: output.data, width: output.dims.at(-1), height: output.dims.at(-2) };
     }
 
@@ -102,6 +105,7 @@ export class DepthEstimator {
 // moves slowly so the whole picture doesn't pump; each pixel follows almost at once, since
 // any lag there shows as depth trailing behind moving objects
 const RANGE_EASE = 0.1;
+const TIMING_EVERY = 100; // estimates per timing log
 const PIXEL_EASE = 0.85;
 
 // While started, keeps two textures in step: the depth of the video (0 the farthest point of
@@ -173,14 +177,26 @@ export class DepthSource {
                 // a paused video keeps its depth
                 if (video.readyState >= video.HAVE_CURRENT_DATA && video.currentTime !== lastTime) {
                     lastTime = video.currentTime;
+                    const started = performance.now();
                     const frame = await createImageBitmap(video, { imageOrientation: 'flipY' });
+                    const captured = performance.now();
                     const depth = await this.estimator.estimate(frame, true);
                     if (this.disposed) {
                         frame.close();
                         return;
                     }
+                    const estimated = performance.now();
                     this.update(depth);
                     this.show(frame);
+                    if (DEBUG) {
+                        const { prepare, run } = this.estimator.timing;
+                        this.logTiming({
+                            capture: captured - started,
+                            prepare,
+                            run,
+                            update: performance.now() - estimated,
+                        });
+                    }
                 }
                 await new Promise((resolve) => setTimeout(resolve, 4));
             }
@@ -192,6 +208,23 @@ export class DepthSource {
             this.failed = true;
             this.running = false;
         }
+    }
+
+    // Debug builds: the average time of each step per estimate, in ms, every TIMING_EVERY
+    // estimates. capture, prepare (scale, read back, normalise) and update run on the page's
+    // main thread; run is mostly the GPU.
+    logTiming(sample) {
+        this.timings ??= [];
+        this.timings.push(sample);
+        if (this.timings.length < TIMING_EVERY) return;
+        const average = Object.fromEntries(
+            Object.keys(sample).map((key) => [
+                key,
+                +(this.timings.reduce((sum, t) => sum + t[key], 0) / this.timings.length).toFixed(1),
+            ]),
+        );
+        debug('depth timing (ms per estimate)', average);
+        this.timings = [];
     }
 
     update({ data, width, height }) {
