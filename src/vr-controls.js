@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { DEPTH_STRENGTHS } from './depth.js';
-import { PROJECTION_LABELS } from './projections.js';
-import { DISTANCES } from './vr-player.js';
+import { forwardFromYaw } from './meshes.js';
+import { DISTANCES, PROJECTION_LABELS } from './projections.js';
 
 // In-VR controls: a laser from each controller, a panel with the video's controls, and
 // moving things around like in the Steam Frame's UI. Point the laser and pull the trigger to
@@ -262,8 +262,7 @@ export class VRControls {
 
     // Below the screen, tilted towards the viewer
     resetPanelPosition(origin = new THREE.Vector3(), yaw = 0) {
-        const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
-        this.panel.position.copy(origin).addScaledVector(forward, 1.0);
+        this.panel.position.copy(origin).addScaledVector(forwardFromYaw(yaw), 1.0);
         this.panel.position.y -= 0.45;
         this.panel.rotation.set(-0.5, yaw, 0, 'YXZ');
     }

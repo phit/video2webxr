@@ -44,3 +44,10 @@ export function enterVRError(e) {
 
 // Most videos on the web are plain flat videos
 export const DEFAULT_PROJECTION = 'FLAT';
+
+// How far behind the centre of a 180° video the viewer sits, as a fraction of the sphere's
+// radius. The hemisphere then becomes a big curved screen in front of you instead of
+// wrapping around you: at these steps it spans about 150°, 127° and 103°, so close-ups feel
+// less in your face, at the cost of some stretching towards the edges. Only a sizeable
+// fraction of the radius makes a difference, which is why this isn't just a step back.
+export const DISTANCES = [0, 0.25, 0.5, 0.8];
