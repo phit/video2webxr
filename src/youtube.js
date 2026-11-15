@@ -2,6 +2,7 @@ import cardboardSvg from '../icons/cardboard.svg';
 import { armClick } from './click-to-enter.js';
 import { debug } from './log.js';
 import { createPageControls } from './page-controls.js';
+import { answerPopup, COMMANDS } from './popup-protocol.js';
 import { detectStereo } from './stereo.js';
 import { VRPlayer } from './vr-player.js';
 
@@ -151,27 +152,19 @@ function arm(picked) {
     return popupState();
 }
 
-function handlePopup(message) {
+answerPopup((message) => {
     switch (message.type) {
-        case 'state':
+        case COMMANDS.STATE:
             return popupState();
-        case 'arm':
+        case COMMANDS.ARM:
             return arm(message.projection);
-        case 'setProjection':
+        case COMMANDS.SET_PROJECTION:
             player?.setProjection(message.projection);
             return popupState();
-        case 'stop':
+        case COMMANDS.STOP:
             disarm?.();
             disarm = null;
             player?.renderer.xr.getSession()?.end();
             return popupState();
-    }
-}
-
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    try {
-        sendResponse(handlePopup(message));
-    } catch (e) {
-        sendResponse({ error: e.message });
     }
 });

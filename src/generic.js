@@ -1,5 +1,6 @@
 import { armClick, showMessage } from './click-to-enter.js';
 import { debug } from './log.js';
+import { answerPopup, COMMANDS } from './popup-protocol.js';
 import { DEFAULT_PROJECTION, enterVRError } from './projections.js';
 import { detectStereo } from './stereo.js';
 import { VRPlayer } from './vr-player.js';
@@ -208,15 +209,15 @@ function createController() {
         },
         async handle(message) {
             switch (message.type) {
-                case 'state':
+                case COMMANDS.STATE:
                     return { state, projection: player?.projection ?? projection, error: lastError, cors: lastCors };
-                case 'arm':
+                case COMMANDS.ARM:
                     return arm(message.projection, message.withHeader);
-                case 'setProjection':
+                case COMMANDS.SET_PROJECTION:
                     projection = message.projection;
                     player?.setProjection(projection);
                     return { state };
-                case 'stop':
+                case COMMANDS.STOP:
                     stop();
                     return { state };
             }
@@ -227,8 +228,5 @@ function createController() {
 // the popup may inject this script more than once
 if (!window.__video2webxr) {
     window.__video2webxr = createController();
-    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-        window.__video2webxr.handle(message).then(sendResponse, (e) => sendResponse({ error: e.message }));
-        return true; // responds asynchronously
-    });
+    answerPopup((message) => window.__video2webxr.handle(message));
 }

@@ -1,3 +1,4 @@
+import { COMMANDS } from './popup-protocol.js';
 import { DEFAULT_PROJECTION, depthSupported, PROJECTION_LABELS } from './projections.js';
 
 // The extension's toolbar popup. Finds the largest video in the tab, injects generic.js into
@@ -137,7 +138,7 @@ function offerAllow(cors, scope, error) {
 async function workAround(reply, projection) {
     const tryWith = async (scope) => {
         await allowReading(reply.cors, scope);
-        return send({ type: 'arm', projection, withHeader: true });
+        return send({ type: COMMANDS.ARM, projection, withHeader: true });
     };
     if (await chrome.permissions.contains({ origins: ALL_SITES })) return tryWith('all');
     if (!(await chrome.permissions.contains({ origins: corsOrigins(reply.cors, 'servers') }))) {
@@ -159,7 +160,7 @@ async function enter() {
         }
         // on YouTube an empty value means "detect automatically"
         const projection = projectionSelect.value || undefined;
-        let reply = await send({ type: 'arm', projection });
+        let reply = await send({ type: COMMANDS.ARM, projection });
         if (reply.cors) reply = await workAround(reply, projection);
         if (reply.error) setStatus(reply.error, true);
         else showState(reply.state);
@@ -171,7 +172,7 @@ async function enter() {
 }
 
 async function stop() {
-    const reply = await send({ type: 'stop' }).catch(() => ({ state: 'idle' }));
+    const reply = await send({ type: COMMANDS.STOP }).catch(() => ({ state: 'idle' }));
     showState(reply.state);
     setStatus('Stopped.');
 }
@@ -187,7 +188,7 @@ async function init() {
         // the remembered choice is for other sites; YouTube detects the projection per video
         if (!onYouTube) localStorage.setItem('projection', projectionSelect.value);
         if (target && target.state !== 'none' && projectionSelect.value)
-            send({ type: 'setProjection', projection: projectionSelect.value }).catch(() => {});
+            send({ type: COMMANDS.SET_PROJECTION, projection: projectionSelect.value }).catch(() => {});
     };
     enterButton.onclick = enter;
     stopButton.onclick = stop;
@@ -218,7 +219,7 @@ async function init() {
     enterButton.disabled = false;
     showState(target.state);
     if (target.state === 'none') return;
-    const reply = await send({ type: 'state' }).catch(() => ({}));
+    const reply = await send({ type: COMMANDS.STATE }).catch(() => ({}));
     // in VR, the projection shown, which may have been detected as 3D
     if (target.state === 'active' && reply.projection) projectionSelect.value = reply.projection;
     // tell the user why the last attempt didn't work, and for a video blocked by CORS (found when
@@ -242,7 +243,7 @@ async function initYouTube() {
     target = { frameId: 0, state: 'none' };
     let reply;
     try {
-        reply = await send({ type: 'state' });
+        reply = await send({ type: COMMANDS.STATE });
     } catch {
         setStatus('Reload the page to use video2webxr on it.', true); // opened before the extension
         return;
