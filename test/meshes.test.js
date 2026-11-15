@@ -30,12 +30,26 @@ test('remapUV leaves a full frame as it is', () => {
     close(v, [0, 1]);
 });
 
-test('remapUV trims each eye 2 px at the edge it shares with the other', () => {
-    close(remapped([0, 0, 0.5, 1]).u, [0, 0.5 - 2 / 1000]); // left
+test('remapUV trims each eye 2 px at both edges on the split axis', () => {
+    close(remapped([0, 0, 0.5, 1]).u, [2 / 1000, 0.5 - 2 / 1000]); // left
     close(remapped([0, 0, 0.5, 1]).v, [0, 1]);
-    close(remapped([0.5, 0, 0.5, 1]).u, [0.5 + 2 / 1000, 1]); // right
-    close(remapped([0, 0.5, 1, 0.5]).v, [0.5 + 2 / 500, 1]); // top
-    close(remapped([0, 0, 1, 0.5]).v, [0, 0.5 - 2 / 500]); // bottom
+    close(remapped([0.5, 0, 0.5, 1]).u, [0.5 + 2 / 1000, 1 - 2 / 1000]); // right
+    close(remapped([0, 0.5, 1, 0.5]).v, [0.5 + 2 / 500, 1 - 2 / 500]); // top
+    close(remapped([0, 0, 1, 0.5]).v, [2 / 500, 0.5 - 2 / 500]); // bottom
+});
+
+// Any offset between the eyes' pictures would read as depth (or as a vertical offset top/bottom)
+test("remapUV keeps both eyes' pictures aligned: same centre in each half, same scale", () => {
+    const centre = ([a, b]) => (a + b) / 2;
+    const width = ([a, b]) => b - a;
+    const left = remapped([0, 0, 0.5, 1]).u;
+    const right = remapped([0.5, 0, 0.5, 1]).u;
+    close([centre(left), centre(right)], [0.25, 0.75]);
+    close([width(left)], [width(right)]);
+    const top = remapped([0, 0.5, 1, 0.5]).v;
+    const bottom = remapped([0, 0, 1, 0.5]).v;
+    close([centre(top), centre(bottom)], [0.75, 0.25]);
+    close([width(top)], [width(bottom)]);
 });
 
 test('videoAspect falls back to 16:9 until the size is known', () => {

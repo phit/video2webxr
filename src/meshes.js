@@ -19,19 +19,21 @@ const LEFT_HALF = [0, 0, 0.5, 1],
 const TOP_HALF = [0, 0.5, 1, 0.5],
     BOTTOM_HALF = [0, 0, 1, 0.5];
 
-// Pixels left out at the edge an eye shares with the other, so filtering doesn't blend the other
-// eye's edge in. More than half a pixel, because the flat screen's smaller mipmaps blur wider.
+// Pixels left out at each side of an eye's half, so filtering doesn't blend the other eye's edge
+// in. More than half a pixel, because the flat screen's smaller mipmaps blur wider.
 const EYE_EDGE_PX = 2;
 
-// Maps a geometry's 0-1 uvs onto a texture region of the video, trimmed at the shared edge
+// Maps a geometry's 0-1 uvs onto a texture region of the video. A half is trimmed at both of its
+// edges on the split axis, so each eye's picture stays centred where it was: trimming only the
+// shared edge would shift the two eyes' pictures against each other, which reads as depth
+// (everything closer side by side, a vertical offset between the eyes top/bottom).
 export function remapUV(geometry, [offsetU, offsetV, scaleU, scaleV], video) {
     const trimU = scaleU < 1 && video.videoWidth ? EYE_EDGE_PX / video.videoWidth : 0;
     const trimV = scaleV < 1 && video.videoHeight ? EYE_EDGE_PX / video.videoHeight : 0;
-    // the shared edge is where a half doesn't touch the frame's border
-    if (offsetU > 0) offsetU += trimU;
-    if (offsetV > 0) offsetV += trimV;
-    scaleU -= trimU;
-    scaleV -= trimV;
+    offsetU += trimU;
+    offsetV += trimV;
+    scaleU -= 2 * trimU;
+    scaleV -= 2 * trimV;
     const uv = geometry.attributes.uv;
     for (let i = 0; i < uv.count; i++) {
         uv.setXY(i, offsetU + uv.getX(i) * scaleU, offsetV + uv.getY(i) * scaleV);
