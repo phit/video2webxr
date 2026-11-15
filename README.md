@@ -57,7 +57,8 @@ A controls panel floats below the video: play/pause, the seek bar, skip 10 secon
 | To | Do this |
 |---|---|
 | Use a control | Point the controller's laser at it and pull the trigger; hold the trigger to drag the seek or volume slider |
-| Hide or show the panel | Press A/X or B/Y. Pulling the trigger away from the screen also shows it, and it comes back in front of you if it was out of view |
+| Hide or show the panel | Press A/X or B/Y. Pulling the trigger away from the screen also shows it, and it comes back in front of you if it was out of view. On 360° and 180° videos the lasers hide with the panel |
+| Get the lasers out of the way | Put the controller down or hold it still: after a few seconds its laser fades out, unless it points at the panel or the screen. Move it or press anything to bring it back |
 | Move the panel or the flat screen | Drag the bar below it with the trigger, or hold the grip anywhere on it. It stays upright and turns to face you |
 | Move it closer or further away | While holding it, push the thumbstick forward or back |
 | Resize the flat screen | Drag its bottom right corner, or push the thumbstick left or right while holding it |

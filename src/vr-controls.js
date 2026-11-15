@@ -8,7 +8,8 @@ import { DISTANCES } from './vr-player.js';
 // use a control. The panel and the flat screen each have a bar below them: drag it with the
 // trigger to move them (or hold the grip anywhere on them); while held, the thumbstick moves
 // them away/closer and resizes them. The screen's bottom right corner resizes it. A/X or B/Y
-// hide and show the panel, and the trigger shows it again too. Clicking the flat screen
+// hide and show the panel, and the trigger shows it again too. A controller's laser fades out
+// while the controller lies still. Clicking the flat screen
 // plays/pauses; double clicking its left or right third skips back or forward.
 
 // The panel is drawn into a canvas and shown on a plane PANEL_WIDTH metres wide
@@ -25,6 +26,16 @@ const MAX_SCALE = 10;
 // How quickly dragged windows catch up with the controller (per second); lower is smoother
 // but lags more
 const SMOOTHING = 12;
+// A controller's laser fades out once it has stayed within STILL_METRES and STILL_RADIANS of
+// one pose for STILL_SECONDS (put down, or resting in a lap), unless it points at something;
+// it's back at once when the controller moves or a button or the thumbstick is used.
+// Tracking noise of a resting controller is well below these.
+const STILL_METRES = 0.01;
+const STILL_RADIANS = THREE.MathUtils.degToRad(2);
+const STILL_SECONDS = 3;
+const FADE_SECONDS = 0.4;
+const LASER_OPACITY = 0.5;
+const STICK_DEADZONE = 0.2;
 
 // xr-standard gamepad mapping
 const BUTTON_A_X = 4;
@@ -196,12 +207,12 @@ export class VRControls {
         const controller = this.renderer.xr.getController(index);
         const laser = new THREE.Line(
             new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)]),
-            new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 }),
+            new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: LASER_OPACITY }),
         );
         laser.scale.z = LASER_LENGTH;
         const dot = new THREE.Mesh(
             new THREE.SphereGeometry(0.006, 12, 8),
-            new THREE.MeshBasicMaterial({ color: 0xffffff }),
+            new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true }),
         );
         dot.visible = false;
         controller.add(laser, dot);
@@ -214,6 +225,11 @@ export class VRControls {
             resizing: null,
             sliding: null,
             buttons: [],
+            // for fading the laser out while the controller is still
+            stillPosition: new THREE.Vector3(),
+            stillQuaternion: new THREE.Quaternion(),
+            stillSeconds: 0,
+            fade: 1,
         };
 
         controller.addEventListener('connected', (event) => {
@@ -313,9 +329,12 @@ export class VRControls {
         const length = hit ? hit.distance : LASER_LENGTH;
         // hide the laser pointer in 360°/180°-view when hiding the panel; keep the pointer active at all times in Flatscreen
         const isPointerVisible = this.player.isFlat || this.panel.visible || !!data.held || !!data.resizing;
-        data.laser.visible = isPointerVisible;
+        const fade = this.stillFade(controller, gamepad, delta);
+        data.laser.visible = isPointerVisible && fade > 0;
+        data.laser.material.opacity = LASER_OPACITY * fade;
         data.laser.scale.z = length;
-        data.dot.visible = !!hit;
+        data.dot.visible = !!hit && fade > 0;
+        data.dot.material.opacity = fade;
         data.dot.position.set(0, 0, -length);
         if (data.held) this.dragHeld(data, gamepad?.axes, delta);
 
@@ -323,6 +342,32 @@ export class VRControls {
             const point = this.panelPoint(hit);
             if (point) this.slide(data.sliding, point);
         }
+    }
+
+    // How visible the controller's laser is, 0-1: fading out once the controller has been still
+    // for a while (see STILL_SECONDS), back to 1 at once when it's used
+    stillFade(controller, gamepad, delta) {
+        const data = controller.userData;
+        const used =
+            !!data.hover ||
+            !!data.held ||
+            !!data.resizing ||
+            !!data.sliding ||
+            !!gamepad?.buttons.some((button) => button.pressed) ||
+            !!gamepad?.axes.some((axis) => Math.abs(axis) > STICK_DEADZONE);
+        const moved =
+            controller.position.distanceTo(data.stillPosition) > STILL_METRES ||
+            controller.quaternion.angleTo(data.stillQuaternion) > STILL_RADIANS;
+        if (used || moved) {
+            data.stillPosition.copy(controller.position);
+            data.stillQuaternion.copy(controller.quaternion);
+            data.stillSeconds = 0;
+            data.fade = 1;
+        } else {
+            data.stillSeconds += delta;
+            if (data.stillSeconds > STILL_SECONDS) data.fade = Math.max(0, data.fade - delta / FADE_SECONDS);
+        }
+        return data.fade;
     }
 
     // The panel, the screen or a handle, for a mesh the laser hit
